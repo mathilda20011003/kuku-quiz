@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TV Duo Quiz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Sometype+Mono:ital,wght@0,400..700;1,400..700&family=Nothing+You+Could+Do&family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Bernard MT Condensed';
+            src: local('Bernard MT Condensed'), local('BernardMT-Condensed');
+            font-weight: normal;
+            font-style: normal;
+        }
+        
+        body {
+            background-color: #1a0b2e;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling globally */
+            font-family: 'Sometype Mono', monospace;
+        }
+        .y2k-gradient {
+            background: linear-gradient(180deg, #2b114e 0%, #1a0b2e 100%);
+        }
+        .y2k-halftone {
+            background-image: radial-gradient(#ffffff1a 1px, transparent 1px);
+            background-size: 10px 10px;
+        }
+
+        /* REFINED PIXEL RESULT BANNER - Speech bubble style */
+        .pixel-result-banner {
+            position: absolute;
+            bottom: -10px;
+            left: -15px;
+            background-color: #b241b8;
+            border: 3px solid #4cc9f0;
+            padding: 6px 18px;
+            transform: rotate(-3deg);
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .pixel-result-banner::before {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 10px;
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid #b241b8;
+        }
+        
+        .pixel-result-banner::after {
+            content: '';
+            position: absolute;
+            bottom: -13px;
+            left: 8px;
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 12px solid #4cc9f0;
+        }
+
+        .font-title {
+            font-family: "Bernard MT Condensed", "Bebas Neue", sans-serif;
+            font-weight: normal;
+            line-height: 0.9;
+        }
+        .font-button {
+            font-family: 'Sometype Mono', monospace;
+            font-weight: 700;
+        }
+        .font-handwriting {
+            font-family: 'Nothing You Could Do', cursive;
+        }
+        .font-pixel {
+            font-family: 'Press Start 2P', system-ui;
+        }
+        /* Page transitions */
+        .animate-fadeIn {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .grainy-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0.05;
+            background-image: url('https://grainy-gradients.vercel.app/noise.svg');
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "@google/genai": "https://esm.sh/@google/genai@^1.41.0"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+    <div class="grainy-overlay"></div>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
