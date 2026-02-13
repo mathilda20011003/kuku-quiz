@@ -14,7 +14,6 @@ export interface QuizQuestion {
 export interface UserInputs {
   nickname: string;
   partnerName: string;
-  relationship: string;
   userGender?: string;
   partnerGender?: string;
 }
