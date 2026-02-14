@@ -354,9 +354,13 @@ export default function App() {
       if (canShareFiles) {
         // Mobile: Try native share first
         try {
+          const shareText = result 
+            ? `I just took the "Which TV Duo Are You?" quiz with ${inputs.partnerName} and we got ${result.duoName}! 💕✨\n\nTake the quiz and find out which iconic TV duo you and your person are: ${window.location.origin}${window.location.pathname}`
+            : `Take the "Which TV Duo Are You?" quiz and find out which iconic TV duo you are! 💕✨\n\n${window.location.origin}${window.location.pathname}`;
+          
           await navigator.share({
-            title: 'Which TV Duo Are You?',
-            text: result ? `${inputs.nickname} × ${inputs.partnerName} are ${result.duoName}! 💕` : '',
+            title: 'Which TV Duo Are You? 💕',
+            text: shareText,
             files: [file]
           });
           return; // Success, exit
