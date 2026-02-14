@@ -251,7 +251,6 @@ export default function App() {
         backgroundColor: null,
         scale: 2,
         logging: false,
-        width: 400,
       });
       console.timeEnd('html2canvas rendering');
       
@@ -890,10 +889,12 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
         <div ref={captureRef} style={{ 
           width: '400px',
+          maxWidth: '400px',
           height: 'auto',
           minHeight: '750px',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxSizing: 'border-box'
         }}>
           {/* Background Image - MUST be first child */}
           <img 
@@ -904,11 +905,12 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               position: 'absolute',
               top: 0,
               left: 0,
-              width: '100%',
+              width: '400px',
               height: '100%',
               objectFit: 'cover',
               objectPosition: 'center',
-              minHeight: '750px'
+              minHeight: '750px',
+              display: 'block'
             }}
           />
           
