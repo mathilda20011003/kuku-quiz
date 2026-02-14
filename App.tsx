@@ -100,7 +100,7 @@ export default function App() {
     const imagesToPreload = [
       finalResult.image,
       '/quiz-result-Polaroid.png',
-      '/result%20background.png',
+      'https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png',
       '/cheering.png',
       '/qrcode.png'
     ];
@@ -821,7 +821,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
         }}>
           {/* Background Image as img element */}
           <img 
-            src="/result%20background.png" 
+            src="https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png" 
             alt="Background"
             crossOrigin="anonymous"
             style={{
