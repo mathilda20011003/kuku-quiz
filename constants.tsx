@@ -109,55 +109,55 @@ export const ALL_RESULTS: Record<string, QuizResult> = {
   "MF_01": {
     title: "Male-Female Duo",
     duoName: "Justin Trudeau × Katy Perry",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Justin+Trudeau+%C3%97+Katy+Perry.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_01.jpg",
     description: "You make **diplomacy** look like a concert. He posts ski pics, you post smiles, and the internet collectively loses it."
   },
   "MF_02": {
     title: "Male-Female Duo",
     duoName: "Taylor Swift × Trump",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Taylor+Swift+%C3%97+Trump.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_02.jpg",
     description: "This relationship runs on headlines. One posts lyrics, the other posts rants, and somehow it still **trends**."
   },
   "MF_03": {
     title: "Male-Female Duo",
     duoName: "Kim Kardashian × Louis Hamilton",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Kim+Kardashian+%C3%97+Louis+Hamilton.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_03.jpg",
     description: "You race between **paparazzi** flashes and fashion weeks like it's a sport. Glamour plus speed equals legendary fuel."
   },
   "MF_04": {
     title: "Mixed Duo",
     duoName: "Barbie × Oppenheimer",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Barbie+%C3%97+Oppenheimer.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_04.jpg",
     description: "One of you says **Hi Barbie**, the other **overthinks** the universe. Somehow you still build your own world together."
   },
   "MF_05": {
     title: "Male-Female Duo",
     duoName: "Damon × Elena",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Damon+%C3%97+Elena.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_05.jpg",
     description: "You **fight**, you **flirt**, you ruin each other's lives a little. Drama is your love language."
   },
   "MF_06": {
     title: "Male-Female Duo",
     duoName: "Mike × Eleven",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Mike+%C3%97+Eleven.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_06.jpg",
     description: "You believed in each other before anyone else did. You'd bike across **dimensions** for each other."
   },
   "MF_07": {
     title: "Male-Female Duo",
     duoName: "Jim × Pam",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Jim+%C3%97+Pam.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_07.jpg",
     description: "You flirt like coworkers and love like best friends. **Slow burn**, inside jokes, forever energy."
   },
   "MF_08": {
     title: "Male-Female Duo",
     duoName: "Joe × Love",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Joe+%C3%97+Love.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_08.jpg",
     description: "You say I'd do anything for you and actually mean it. You think you're the normal one. Plot twist, you're both **insane** for love."
   },
   "MF_09": {
     title: "Male-Female Duo",
     duoName: "Marianne × Connell",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Marianne+%C3%97+Connell.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MF_09.jpg",
     description: "You text paragraphs you never send. Intimacy lives in what's **unsaid** between you."
   },
   
@@ -165,61 +165,61 @@ export const ALL_RESULTS: Record<string, QuizResult> = {
   "FF_01": {
     title: "Female-Female Duo",
     duoName: "Sabrina Carpenter × Taylor Swift",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Sabrina+Carpenter+%C3%97+Taylor+Swift.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_01.jpg",
     description: "One of you writes the bridge, the other runs the stadium. This friendship is strategic and **sentimental**."
   },
   "FF_02": {
     title: "Female-Female Duo",
     duoName: "Billie Eilish × Olivia Rodrigo",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Billie+Eilish+%C3%97+Olivia+Rodrigo.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_02.jpg",
     description: "One of you cries first, the other sends the playlist. You process everything loudly and **never judge** each other."
   },
   "FF_03": {
     title: "Female-Female Duo",
     duoName: "Rihanna × Beyoncé",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Rihanna+%C3%97+Beyonc%C3%A9.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_03.jpg",
     description: "This is **billionaire** energy. You woke up flawless and shine bright like diamonds. You celebrate wins, mind your business, and still **dominate** every room together."
   },
   "FF_04": {
     title: "Female-Female Duo",
     duoName: "Beyonce × Taylor Swift",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Beyonce+%C3%97+Taylor+Swift.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_04.jpg",
     description: "You let each other **shine** and still dominate the room. Supportive in public, unstoppable in private."
   },
   "FF_05": {
     title: "Female-Female Duo",
     duoName: "Blair × Serena",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Blair+%C3%97+Serena.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_05.jpg",
     description: "You **compete**, you forgive, you compete again. You're better together even when it's messy."
   },
   "FF_06": {
     title: "Female-Female Duo",
     duoName: "Casey × Izzie",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Casey+%C3%97+Izzie.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_06.jpg",
     description: "You make each other **brave**. You choose **authenticity** over comfort."
   },
   "FF_07": {
     title: "Female-Female Duo",
     duoName: "Devi × Eleanor",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Devi+%C3%97+Eleanor.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_07.jpg",
     description: "You hype each other **delusionally** and defend each other aggressively."
   },
   "FF_08": {
     title: "Female-Female Duo",
     duoName: "Maddy × Cassie",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Maddy+%C3%97+Cassie.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_08.jpg",
     description: "You love each other **loudly** and fight even louder. Jealousy, secrets, tears in the bathroom, but neither of you ever truly walks away."
   },
   "FF_09": {
     title: "Female-Female Duo",
     duoName: "Maeve × Aimee",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Maeve+%C3%97+Aimee.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_09.jpg",
     description: "You see each other at your worst and still stay. You **heal** in quiet ways. Honest conversations, gentle support, and the kind of friendship that makes you braver."
   },
   "FF_10": {
     title: "Female-Female Duo",
     duoName: "Rue × Jules",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Rue+%C3%97+Jules.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/FF_10.jpg",
     description: "You love intensely and hurt deeply. **Magnetic**, messy, impossible to ignore."
   },
   
@@ -227,31 +227,31 @@ export const ALL_RESULTS: Record<string, QuizResult> = {
   "MM_01": {
     title: "Male-Male Duo",
     duoName: "Kanye West × Travis Scott",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Kanye+West+%C3%97+Travis+Scott.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MM_01.jpg",
     description: "You **remix** life like a beat. One brings chaos, the other brings vibe, and the world just bumps harder."
   },
   "MM_02": {
     title: "Male-Male Duo",
     duoName: "Trump × Bad Bunny",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Trump+%C3%97+Bad+Bunny.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MM_02.jpg",
     description: "One calls the show terrible, the other still trends worldwide. Your relationship is pure **contradiction**."
   },
   "MM_03": {
     title: "Male-Male Duo",
     duoName: "MrBeast × Thanos",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MrBeast+%C3%97+Thanos.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MM_03.jpg",
     description: "You either give away islands or snap half the universe. Your friendship is either **philanthropy** or apocalypse."
   },
   "MM_04": {
     title: "Male-Male Duo",
     duoName: "Steve × Dustin",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Steve+%C3%97+Dustin.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MM_04.jpg",
     description: "You started as unlikely friends and ended as family. You **roast** each other daily but would fight monsters together."
   },
   "MM_05": {
     title: "Male-Male Duo",
     duoName: "Damon × Stefan",
-    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/Damon+%C3%97+Stefan.jpg",
+    image: "https://kuku-quiz.s3.us-west-1.amazonaws.com/MM_05.jpg",
     description: "You fight over everything but always choose each other. Different paths, same blood, permanent **loyalty**."
   }
 };

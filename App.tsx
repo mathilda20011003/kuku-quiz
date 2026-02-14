@@ -71,11 +71,15 @@ export default function App() {
       // Process each answer
       userAnswers.forEach((answer, index) => {
         const questionKey = `Q${index + 1}` as keyof typeof poolLogic;
-        const resultIds = poolLogic[questionKey][answer as 'A' | 'B' | 'C' | 'D'];
+        const questionLogic = poolLogic[questionKey];
         
-        resultIds.forEach(id => {
-          scores[id] = (scores[id] || 0) + 1;
-        });
+        if (questionLogic && questionLogic[answer as 'A' | 'B' | 'C' | 'D']) {
+          const resultIds = questionLogic[answer as 'A' | 'B' | 'C' | 'D'];
+          
+          resultIds.forEach(id => {
+            scores[id] = (scores[id] || 0) + 1;
+          });
+        }
       });
       
       // Find the result with highest score
@@ -88,6 +92,12 @@ export default function App() {
           winningId = id;
         }
       });
+      
+      // Fallback to first result if no winner found
+      if (!winningId) {
+        const poolPrefix = targetPool === 'POOL_MM' ? 'MM' : targetPool === 'POOL_FF' ? 'FF' : 'MF';
+        winningId = `${poolPrefix}_01`;
+      }
       
       // Set the result
       setResult(ALL_RESULTS[winningId]);
