@@ -234,22 +234,35 @@ export default function App() {
     await waitForImages(captureRef.current);
     console.timeEnd('Image loading');
     
+    // Debug: Check computed styles
+    const computedStyle = window.getComputedStyle(captureRef.current);
+    console.log('Capture element background:', computedStyle.backgroundImage);
+    console.log('Capture element backgroundColor:', computedStyle.backgroundColor);
+    console.log('Capture element dimensions:', {
+      width: captureRef.current.offsetWidth,
+      height: captureRef.current.offsetHeight
+    });
+    
     try {
       console.time('html2canvas rendering');
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true,
         allowTaint: false,
-        backgroundColor: '#1a0b2e', // Fallback background color
-        scale: 1.5,
-        logging: false,
-        imageTimeout: 15000,
-        proxy: undefined,
-        removeContainer: true,
+        backgroundColor: null,
+        scale: 2,
+        logging: true,
+        width: 400,
+        height: 850,
       });
       console.timeEnd('html2canvas rendering');
+      
+      console.log('Canvas dimensions:', {
+        width: canvas.width,
+        height: canvas.height
+      });
 
       console.time('Blob conversion');
-      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png', 0.95));
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
       console.timeEnd('Blob conversion');
       
       console.timeEnd('Total capture time');
@@ -257,7 +270,7 @@ export default function App() {
     } catch (err) {
       console.error('Capture failed:', err);
       console.timeEnd('Total capture time');
-      alert('Screenshot failed. Please make sure all images are loaded. Error: ' + (err as Error).message);
+      alert('Screenshot failed. Error: ' + (err as Error).message);
       return null;
     }
   };
@@ -875,23 +888,36 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       )}
 
       {/* Hidden Capture Area - Only for screenshot, not displayed */}
-      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+      <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
         <div ref={captureRef} style={{ 
           width: '400px',
-          minHeight: '850px',
+          height: '850px',
           position: 'relative',
-          overflow: 'hidden',
-          backgroundColor: '#1a0b2e',
-          backgroundImage: 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          overflow: 'hidden'
         }}>
+          {/* Background Image - MUST be first child */}
+          <img 
+            src="https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png"
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              objectPosition: 'center'
+            }}
+          />
           
-          {/* Content layer */}
+          {/* Content layer - positioned above background */}
           <div style={{
-            position: 'relative',
-            zIndex: 1,
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
             padding: '40px 20px 60px 20px',
             display: 'flex',
             flexDirection: 'column',
