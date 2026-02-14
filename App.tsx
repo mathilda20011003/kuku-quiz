@@ -592,7 +592,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
-    <div className="flex flex-col items-center h-full justify-between py-4 relative">
+    <div className="result-page-container flex flex-col items-center h-full justify-between py-4 relative overflow-hidden">
       {/* Share Menu Overlay */}
       {showShareMenu && (
         <div 
@@ -891,7 +891,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 space-y-4 flex flex-col items-center pb-8">
+      <div className="w-full px-6 space-y-4 flex flex-col items-center pb-4">
         <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
