@@ -356,7 +356,7 @@ const StepCover = ({ onStart }: { onStart: () => void }) => (
       </p>
     </div>
     
-    <div className="w-full px-6 pb-4">
+    <div className="w-full px-6 pb-8">
         <button 
         onClick={onStart}
         className="w-[327px] h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all mx-auto block"
@@ -441,7 +441,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
       </div>
     </div>
 
-    <div className="w-full pb-4">
+    <div className="w-full pb-8">
         <button 
         onClick={onContinue}
         disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
@@ -481,7 +481,7 @@ const StepQuiz = ({ question, index, onAnswer }: { question: any, index: number,
       </div>
     </div>
 
-    <div className="space-y-2.5 pb-4">
+    <div className="space-y-2.5 pb-8">
       {question.options.map((opt: any, i: number) => (
         <button 
           key={i}
@@ -891,7 +891,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 space-y-4 flex flex-col items-center pb-4">
+      <div className="w-full px-6 space-y-4 flex flex-col items-center pb-8">
         <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
