@@ -23,11 +23,13 @@ export default function App() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<string[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
+  const [showShareMenu, setShowShareMenu] = useState(false);
+  const captureRef = useRef<HTMLDivElement>(null);
 
   const startQuiz = () => setStep('INPUTS');
   
   const handleInputsSubmit = () => {
-    if (inputs.nickname && inputs.partnerName) {
+    if (inputs.nickname && inputs.partnerName && inputs.userGender && inputs.partnerGender) {
       setStep('QUIZ');
     }
   };
@@ -102,7 +104,7 @@ export default function App() {
       // Set the result
       setResult(ALL_RESULTS[winningId]);
       setStep('RESULT');
-    }, 2000);
+    }, 5000);
   };
 
   const goBack = () => {
@@ -116,6 +118,131 @@ export default function App() {
         }
     }
     else if (step === 'RESULT') setStep('COVER');
+  };
+
+  // Capture and share functions for result page
+  const captureImage = async (): Promise<Blob | null> => {
+    if (!captureRef.current) return null;
+    
+    try {
+      const canvas = await html2canvas(captureRef.current, {
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null, // Use transparent background to show the background image
+        scale: 2,
+        logging: false,
+        imageTimeout: 15000,
+        proxy: undefined,
+      });
+
+      return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+    } catch (err) {
+      console.error('Capture failed:', err);
+      
+      // Fallback: try without CORS
+      try {
+        console.log('Retrying without CORS...');
+        const canvas = await html2canvas(captureRef.current, {
+          useCORS: false,
+          allowTaint: false,
+          backgroundColor: null,
+          scale: 2,
+          logging: false,
+        });
+        return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
+      } catch (fallbackErr) {
+        console.error('Fallback also failed:', fallbackErr);
+        alert('Screenshot failed. Please configure CORS on your S3 bucket. See AWS_S3_SETUP_GUIDE.md for instructions.');
+        return null;
+      }
+    }
+  };
+
+  const saveImage = async () => {
+    const blob = await captureImage();
+    if (!blob) {
+      alert('Failed to capture image');
+      return;
+    }
+
+    // Check if we're on iOS Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+    
+    if (isIOS || isSafari) {
+      // For iOS/Safari: Use native share API or open in new window
+      const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
+      
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            title: 'Kuku TV Duo Quiz Result',
+            files: [file]
+          });
+          return;
+        } catch (err) {
+          console.log('Share cancelled or failed');
+        }
+      }
+      
+      // Fallback for Safari: Open image in new tab so user can long-press to save
+      const url = URL.createObjectURL(blob);
+      const newWindow = window.open(url, '_blank');
+      if (newWindow) {
+        setTimeout(() => URL.revokeObjectURL(url), 100);
+        alert('Image opened in new tab. Long-press the image to save it to your device.');
+      } else {
+        alert('Please allow pop-ups to save the image');
+        URL.revokeObjectURL(url);
+      }
+    } else {
+      // For other browsers: Use download link
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kuku-tv-duo-quiz.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  };
+
+  const handleShare = async () => {
+    const blob = await captureImage();
+    if (!blob) {
+      alert('Failed to capture image');
+      return;
+    }
+
+    const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
+    
+    // Check if device supports native share with files
+    const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+    
+    if (canShareFiles) {
+      // Mobile: Try native share first
+      try {
+        await navigator.share({
+          title: 'Which TV Duo Are You?',
+          text: result ? `${inputs.nickname} × ${inputs.partnerName} are ${result.duoName}! 💕` : '',
+          files: [file]
+        });
+        return; // Success, exit
+      } catch (err) {
+        // User cancelled or share failed
+        if (err instanceof Error && err.name === 'AbortError') {
+          // User cancelled, do nothing
+          console.log('Share cancelled by user');
+          return;
+        }
+        // Other error, fall through to custom menu
+        console.log('Native share failed, showing custom menu');
+      }
+    }
+    
+    // Desktop or native share not available: show custom share menu
+    setShowShareMenu(true);
   };
 
   return (
@@ -171,51 +298,26 @@ export default function App() {
             {step === 'RESULT' && (
               <>
                 <div className="flex-1"></div>
-                <button 
-                  onClick={async () => {
-                    const resultElement = document.querySelector('[data-result-capture]') as HTMLElement;
-                    if (!resultElement) return;
-                    
-                    try {
-                      const canvas = await html2canvas(resultElement, {
-                        useCORS: true,
-                        backgroundColor: '#1a0b2e',
-                        scale: 2,
-                        logging: false,
-                      });
-                      
-                      canvas.toBlob(async (blob) => {
-                        if (!blob) return;
-                        const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-                        
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                          try {
-                            await navigator.share({
-                              title: 'Which TV Duo Are You?',
-                              files: [file]
-                            });
-                          } catch (err) {
-                            console.log('Share cancelled');
-                          }
-                        } else {
-                          const url = URL.createObjectURL(blob);
-                          const a = document.createElement('a');
-                          a.href = url;
-                          a.download = 'kuku-tv-duo-quiz.png';
-                          a.click();
-                          URL.revokeObjectURL(url);
-                        }
-                      });
-                    } catch (err) {
-                      console.error('Capture failed:', err);
-                    }
-                  }}
-                  className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                  </svg>
-                </button>
+                <div className="flex items-center space-x-2">
+                  <button 
+                    onClick={saveImage}
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all"
+                    title="Save Image"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                  </button>
+                  <button 
+                    onClick={handleShare}
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all"
+                    title="Share"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                    </svg>
+                  </button>
+                </div>
               </>
             )}
             {step !== 'RESULT' && <div className="w-10"></div>}
@@ -227,7 +329,7 @@ export default function App() {
           {step === 'INPUTS' && <StepInputs inputs={inputs} setInputs={setInputs} onContinue={handleInputsSubmit} />}
           {step === 'QUIZ' && <StepQuiz question={QUESTIONS[currentQuestionIndex]} index={currentQuestionIndex} onAnswer={handleAnswer} />}
           {step === 'LOADING' && <StepLoading />}
-          {step === 'RESULT' && result && <StepResult result={result} inputs={inputs} />}
+          {step === 'RESULT' && result && <StepResult result={result} inputs={inputs} captureRef={captureRef} showShareMenu={showShareMenu} setShowShareMenu={setShowShareMenu} />}
         </div>
       </div>
     </div>
@@ -342,7 +444,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
     <div className="w-full pb-4">
         <button 
         onClick={onContinue}
-        disabled={!inputs.nickname || !inputs.partnerName}
+        disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
         className="w-full h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all disabled:opacity-50"
         style={{
           padding: '0 16px',
@@ -421,11 +523,13 @@ const StepLoading = () => (
     </div>
 );
 
-const StepResult = ({ result, inputs }: { result: QuizResult, inputs: UserInputs }) => {
-  const [isCapturing, setIsCapturing] = useState(false);
-  const [showShareMenu, setShowShareMenu] = useState(false);
-  const resultRef = useRef<HTMLDivElement>(null);
-
+const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMenu }: { 
+  result: QuizResult, 
+  inputs: UserInputs,
+  captureRef: React.RefObject<HTMLDivElement>,
+  showShareMenu: boolean,
+  setShowShareMenu: (show: boolean) => void
+}) => {
   // Function to parse and render description with highlighted keywords
   const renderDescription = (text: string) => {
     const parts = text.split(/(\*\*[^*]+\*\*)/g);
@@ -442,182 +546,305 @@ const StepResult = ({ result, inputs }: { result: QuizResult, inputs: UserInputs
     });
   };
 
-  const captureImage = async (): Promise<Blob | null> => {
-    if (!resultRef.current) return null;
-    
-    try {
-      const canvas = await html2canvas(resultRef.current, {
-        useCORS: true,
-        backgroundColor: '#1a0b2e',
-        scale: 2,
-        logging: false,
-        width: resultRef.current.offsetWidth,
-        height: resultRef.current.offsetHeight,
-      });
-
-      return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-    } catch (err) {
-      console.error('Capture failed:', err);
-      return null;
-    }
-  };
-
-  const handleShare = async () => {
-    if (isCapturing) return;
-    
-    setIsCapturing(true);
-    const blob = await captureImage();
-    setIsCapturing(false);
-
-    if (!blob) {
-      alert('Failed to capture image');
-      return;
-    }
-
-    const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-    
-    // Try native share first (works on mobile)
-    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-      try {
-        await navigator.share({
-          title: 'Which TV Duo Are You?',
-          text: `${inputs.nickname} × ${inputs.partnerName} are ${result.duoName}! 💕`,
-          files: [file]
-        });
-        return;
-      } catch (err) {
-        // User cancelled or share failed, show menu
-      }
-    }
-    
-    // Fallback: show share menu
-    setShowShareMenu(true);
-  };
-
-  const downloadImage = async () => {
-    setIsCapturing(true);
-    const blob = await captureImage();
-    setIsCapturing(false);
-
-    if (!blob) {
-      alert('Failed to capture image');
-      return;
-    }
-
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'kuku-tv-duo-quiz.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
+  const shareToWhatsApp = () => {
+    const text = `I just took the "Which TV Duo Are You?" quiz and got ${result.duoName}! 💕 Come find out yours!`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
     setShowShareMenu(false);
   };
 
-  const shareToInstagram = async () => {
-    await downloadImage();
-    // Open Instagram app on mobile, or web on desktop
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = 'instagram://';
-      // Fallback to web if app not installed
-      setTimeout(() => {
-        window.open('https://www.instagram.com/', '_blank');
-      }, 1000);
-    } else {
-      window.open('https://www.instagram.com/', '_blank');
-    }
+  const shareToTwitter = () => {
+    const text = `I just took the "Which TV Duo Are You?" quiz and got ${result.duoName}! 💕 Come find out yours!`;
+    const url = window.location.href;
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}&hashtags=TVDuoQuiz,Kuku`, '_blank');
+    setShowShareMenu(false);
   };
 
-  const shareToInstagramStories = async () => {
-    await downloadImage();
-    // Try to open Instagram Stories directly
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    if (isMobile) {
-      window.location.href = 'instagram://story-camera';
-      setTimeout(() => {
-        window.open('https://www.instagram.com/', '_blank');
-      }, 1000);
-    } else {
-      window.open('https://www.instagram.com/', '_blank');
-    }
+  const shareToTelegram = () => {
+    const text = `I just took the "Which TV Duo Are You?" quiz and got ${result.duoName}! 💕 Come find out yours!`;
+    const url = window.location.href;
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
+    setShowShareMenu(false);
   };
 
-  const copyImageToClipboard = async () => {
-    setIsCapturing(true);
-    const blob = await captureImage();
-    setIsCapturing(false);
+  const shareToFacebook = () => {
+    const url = window.location.href;
+    window.open(`https://www.facebook.com/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+    setShowShareMenu(false);
+  };
 
-    if (!blob) {
-      alert('Failed to capture image');
-      return;
-    }
+  const shareToReddit = () => {
+    const title = `I just took the "Which TV Duo Are You?" quiz and got ${result.duoName}! 💕`;
+    const url = window.location.href;
+    window.open(`https://reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(title)}`, '_blank');
+    setShowShareMenu(false);
+  };
 
+  const copyLink = async () => {
     try {
-      await navigator.clipboard.write([
-        new ClipboardItem({ 'image/png': blob })
-      ]);
-      alert('✅ Image copied! Now open Instagram and paste it.');
+      await navigator.clipboard.writeText(window.location.href);
+      alert('✅ Link copied to clipboard!');
       setShowShareMenu(false);
     } catch (err) {
-      // Clipboard API not supported, fallback to download
-      await downloadImage();
+      alert('Failed to copy link');
     }
   };
 
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
   return (
-    <div className="flex flex-col items-center h-full justify-between py-4 relative" data-result-capture>
+    <div className="flex flex-col items-center h-full justify-between py-4 relative">
       {/* Share Menu Overlay */}
       {showShareMenu && (
-        <div className="absolute inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setShowShareMenu(false)}>
-          <div className="bg-[#1a0b2e] border-2 border-fuchsia-500 rounded-2xl p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-white text-xl font-title mb-4 text-center">Share Your Result</h3>
-            <div className="space-y-3">
-              <button
-                onClick={shareToInstagramStories}
-                className="w-full py-3 px-4 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-full text-white font-button text-sm flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
-              >
-                <span>📸</span>
-                <span>Share to Instagram Stories</span>
-              </button>
-              <button
-                onClick={shareToInstagram}
-                className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full text-white font-button text-sm flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
-              >
-                <span>📷</span>
-                <span>Share to Instagram Feed</span>
-              </button>
-              <button
-                onClick={copyImageToClipboard}
-                className="w-full py-3 px-4 bg-fuchsia-500 rounded-full text-white font-button text-sm flex items-center justify-center space-x-2 hover:opacity-90 transition-opacity"
-              >
-                <span>📋</span>
-                <span>Copy Image</span>
-              </button>
-              <button
-                onClick={downloadImage}
-                className="w-full py-3 px-4 bg-white/10 border border-white/20 rounded-full text-white font-button text-sm flex items-center justify-center space-x-2 hover:bg-white/20 transition-colors"
-              >
-                <span>💾</span>
-                <span>Download Image</span>
-              </button>
-            </div>
+        <div 
+          className="absolute inset-0 z-50 flex items-center justify-center p-4" 
+          onClick={() => setShowShareMenu(false)}
+        >
+          <div 
+            className="relative max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, #1a0b2e 0%, #2a1442 50%, #1a0b2e 100%)',
+              border: '3px solid #4cc9f0',
+              borderRadius: '24px',
+              padding: '32px 24px',
+              boxShadow: '0 20px 60px rgba(245, 57, 255, 0.4), 0 0 40px rgba(76, 201, 240, 0.3), inset 0 0 60px rgba(245, 57, 255, 0.1)'
+            }}
+          >
+            {/* Close button */}
             <button
               onClick={() => setShowShareMenu(false)}
-              className="mt-4 w-full py-2 text-white/60 font-button text-sm hover:text-white transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 transition-all"
             >
-              Cancel
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
             </button>
+
+            <h3 className="text-[#D3FFF8] text-2xl font-title mb-6 text-center uppercase tracking-wide">
+              Share Your Result
+            </h3>
+            
+            <div className="space-y-3">
+              {isMobile ? (
+                <>
+                  <button
+                    onClick={shareToWhatsApp}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">💬</span>
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={shareToTwitter}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">𝕏</span>
+                    <span>Twitter / X</span>
+                  </button>
+                  <button
+                    onClick={shareToTelegram}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">✈️</span>
+                    <span>Telegram</span>
+                  </button>
+                  <button
+                    onClick={shareToFacebook}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">📘</span>
+                    <span>Facebook</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={copyLink}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">🔗</span>
+                    <span>Copy Link</span>
+                  </button>
+                  <button
+                    onClick={shareToTwitter}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">𝕏</span>
+                    <span>Twitter / X</span>
+                  </button>
+                  <button
+                    onClick={shareToFacebook}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">📘</span>
+                    <span>Facebook</span>
+                  </button>
+                  <button
+                    onClick={shareToReddit}
+                    className="w-full py-3.5 px-5 rounded-full text-white font-button text-base flex items-center justify-center space-x-3 transition-all transform hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(135deg, #F539FF 0%, #B13FB7 100%)',
+                      boxShadow: '0 4px 15px rgba(245, 57, 255, 0.5)',
+                      border: '2px solid #4cc9f0'
+                    }}
+                  >
+                    <span className="text-xl">🤖</span>
+                    <span>Reddit</span>
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
       )}
 
+      {/* Hidden Capture Area - Only for screenshot, not displayed */}
+      <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
+        <div ref={captureRef} style={{ 
+          width: '400px',
+          minHeight: '850px',
+          position: 'relative',
+          overflow: 'hidden'
+        }}>
+          {/* Background Image as img element */}
+          <img 
+            src="/result%20background.png" 
+            alt="Background"
+            crossOrigin="anonymous"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: 0
+            }}
+          />
+          
+          {/* Content layer */}
+          <div style={{
+            position: 'relative',
+            zIndex: 1,
+            padding: '40px 20px 60px 20px',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center'
+          }}>
+            <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px', marginTop: '29px' }}>
+              {/* Polaroid background image */}
+              <img 
+                src="/quiz-result-Polaroid.png" 
+                alt="Polaroid frame" 
+                className="w-full h-auto"
+                crossOrigin="anonymous"
+              />
+              
+              {/* Content overlay positioned on top of polaroid */}
+              <div className="absolute inset-0 flex flex-col" style={{ padding: '14% 10% 14% 10%' }}>
+                <div className="relative w-full aspect-square" style={{ transform: 'rotate(4deg)' }}>
+                  <div className="absolute inset-0 overflow-hidden">
+                    <img src={result.image} alt={result.duoName} className="w-full h-full object-cover" crossOrigin="anonymous" />
+                  </div>
+                  <div className="absolute -top-10 -right-4 font-handwriting text-[#F539FF] text-[32px] rotate-[8deg] z-50">
+                    Your TV Duo!
+                  </div>
+                </div>
+                
+                {/* Result banner */}
+                <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '12px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
+                  <span className="font-title text-white text-[16px] tracking-tight" style={{ 
+                    display: 'block',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    lineHeight: '1.2'
+                  }}>
+                    {result.duoName}
+                  </span>
+                </div>
+              </div>
+
+              <img src="/cheering.png" className="absolute -bottom-8 -right-2 w-28 z-30" alt="Cheering" crossOrigin="anonymous" />
+            </div>
+
+            <div className="text-center mt-8" style={{ width: '100%', padding: '0 20px' }}>
+              <h3 className="font-title tracking-tight uppercase" style={{ 
+                color: '#D3FFF8', 
+                letterSpacing: '0.04em', 
+                lineHeight: '1.2',
+                fontSize: '40px',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                textAlign: 'center'
+              }}>
+                {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
+              </h3>
+            </div>
+
+            <div className="text-white/80 text-center font-button leading-snug px-6 max-w-[320px] mt-6" style={{ 
+              letterSpacing: '-0.02em',
+              fontSize: '14px',
+              lineHeight: '1.4'
+            }}>
+              {renderDescription(result.description)}
+            </div>
+
+            {/* QR Code - Small size */}
+            <div className="flex flex-col items-center mt-8 mb-4">
+              <img 
+                src="/qrcode.png" 
+                alt="Kuku App QR Code" 
+                style={{ width: '80px', height: '80px', marginBottom: '8px' }}
+                crossOrigin="anonymous"
+              />
+              <p className="text-white/80 text-[12px] font-button text-center">
+                The full story unlocks in Kuku!
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Visible Result Display - Original layout */}
       <div className="flex flex-col items-center w-full -mt-8">
-        <div ref={resultRef} style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+        <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px', marginTop: '29px' }}>
-            {/* Polaroid background image - already rotated */}
+            {/* Polaroid background image */}
             <img 
               src="/quiz-result-Polaroid.png" 
               alt="Polaroid frame" 
@@ -629,20 +856,19 @@ const StepResult = ({ result, inputs }: { result: QuizResult, inputs: UserInputs
               <div className="relative w-full aspect-square" style={{ transform: 'rotate(4deg)' }}>
                 <div className="absolute inset-0 overflow-hidden">
                   <img src={result.image} alt={result.duoName} className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 </div>
                 <div className="absolute -top-10 -right-4 font-handwriting text-[#F539FF] text-[32px] rotate-[8deg] z-50">
                   Your TV Duo!
                 </div>
               </div>
               
-              {/* REFINED SMALL PIXEL RESULT BANNER - Speech bubble style */}
+              {/* Result banner */}
               <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '12px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
-                <span className="font-title text-white text-[20px] tracking-tight" style={{ 
+                <span className="font-title text-white text-[16px] tracking-tight" style={{ 
                   display: 'block',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap'
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  lineHeight: '1.2'
                 }}>
                   {result.duoName}
                 </span>
@@ -653,33 +879,38 @@ const StepResult = ({ result, inputs }: { result: QuizResult, inputs: UserInputs
           </div>
 
           <div className="text-center mt-8">
-              <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
-                  {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
-              </h3>
+            <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
+              {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
+            </h3>
           </div>
 
-          <div className="text-white/80 text-center text-[16px] font-button leading-snug px-4 max-w-[280px] line-clamp-3 mt-12 mb-12" style={{ letterSpacing: '-0.02em' }}>
-              {renderDescription(result.description)}
+          <div className="text-white/80 text-center text-[16px] font-button leading-snug px-4 max-w-[280px] mt-12 mb-12" style={{ letterSpacing: '-0.02em' }}>
+            {renderDescription(result.description)}
           </div>
         </div>
       </div>
 
+      {/* Buttons Area - Original layout */}
       <div className="w-full px-6 space-y-4 flex flex-col items-center pb-4">
-          <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>The full story unlocks in Kuku!</p>
-          <button 
+        <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
+          The full story unlocks in Kuku!
+        </p>
+        <button 
           onClick={() => window.open('https://futura.go.link/7dDFx', '_blank')}
           className="w-[327px] h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] flex items-center justify-center space-x-2 transition-all mx-auto cursor-pointer"
           style={{
             padding: '0 16px',
             gap: '10px'
           }}
-          >
+        >
           <span>Continue In Kuku App</span>
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+            <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
-          </button>
-          <p className="text-white/40 text-[10px] font-button text-center mt-2">powered by Kuku, the app that actually gets you</p>
+        </button>
+        <p className="text-white/40 text-[10px] font-button text-center mt-2">
+          powered by Kuku, the app that actually gets you
+        </p>
       </div>
     </div>
   );
