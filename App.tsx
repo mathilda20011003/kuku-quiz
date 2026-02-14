@@ -278,7 +278,7 @@ export default function App() {
       </div>
 
       {/* Level 1: Main Content Container */}
-      <div className="w-full max-w-md h-full max-h-[850px] relative flex flex-col overflow-hidden z-[2]">
+      <div className="w-full max-w-md h-full max-h-[850px] relative flex flex-col overflow-hidden z-[2]" style={{ paddingTop: 'max(8px, env(safe-area-inset-top))', paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}>
         
         {step !== 'COVER' && step !== 'LOADING' && (
           <div className="flex items-center justify-between mb-2 z-10 px-2 pt-2 shrink-0">
@@ -337,8 +337,8 @@ export default function App() {
 }
 
 const StepCover = ({ onStart }: { onStart: () => void }) => (
-  <div className="flex flex-col items-center text-center h-full justify-between py-8">
-    <div className="w-16 h-16 flex items-center justify-center mt-8">
+  <div className="flex flex-col items-center text-center h-full justify-between py-4">
+    <div className="w-16 h-16 flex items-center justify-center mt-4">
         <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/logo.png" alt="Logo" className="w-full h-full object-contain" />
     </div>
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 -mt-12">
@@ -356,7 +356,7 @@ const StepCover = ({ onStart }: { onStart: () => void }) => (
       </p>
     </div>
     
-    <div className="w-full px-6 pb-8">
+    <div className="w-full px-6 pb-4">
         <button 
         onClick={onStart}
         className="w-[327px] h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all mx-auto block"
@@ -441,7 +441,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
       </div>
     </div>
 
-    <div className="w-full pb-8">
+    <div className="w-full pb-4">
         <button 
         onClick={onContinue}
         disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
@@ -481,7 +481,7 @@ const StepQuiz = ({ question, index, onAnswer }: { question: any, index: number,
       </div>
     </div>
 
-    <div className="space-y-2.5 pb-8">
+    <div className="space-y-2.5 pb-4">
       {question.options.map((opt: any, i: number) => (
         <button 
           key={i}
@@ -592,7 +592,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
   const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
   return (
-    <div className="result-page-container flex flex-col items-center h-full justify-between py-4 relative overflow-hidden">
+    <div className="result-page-container flex flex-col items-center h-full justify-between py-2 relative overflow-hidden">
       {/* Share Menu Overlay */}
       {showShareMenu && (
         <div 
@@ -841,9 +841,9 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Visible Result Display - Original layout */}
-      <div className="flex flex-col items-center w-full -mt-8">
+      <div className="flex flex-col items-center w-full">
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-          <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px', marginTop: '29px' }}>
+          <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px' }}>
             {/* Polaroid background image */}
             <img 
               src="/quiz-result-Polaroid.png" 
@@ -878,20 +878,20 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/cheering.png" className="absolute -bottom-8 -right-2 w-28 z-30" alt="Cheering" />
           </div>
 
-          <div className="text-center mt-8">
+          <div className="text-center mt-4">
             <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
               {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
             </h3>
           </div>
 
-          <div className="text-white/80 text-center text-[16px] font-button leading-snug px-4 max-w-[280px] mt-12 mb-12" style={{ letterSpacing: '-0.02em' }}>
+          <div className="text-white/80 text-center text-[16px] font-button leading-snug px-4 max-w-[280px] mt-6 mb-4" style={{ letterSpacing: '-0.02em' }}>
             {renderDescription(result.description)}
           </div>
         </div>
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 space-y-4 flex flex-col items-center pb-4">
+      <div className="w-full px-6 space-y-2 flex flex-col items-center pb-6">
         <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
@@ -908,7 +908,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
-        <p className="text-white/40 text-[10px] font-button text-center mt-2">
+        <p className="text-white/40 text-[10px] font-button text-center">
           powered by Kuku, the app that actually gets you
         </p>
       </div>
