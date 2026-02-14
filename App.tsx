@@ -569,7 +569,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
 
         <input 
           type="text" 
-          placeholder="Your partner's name"
+          placeholder="The other person's name"
           maxLength={7}
           className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
           value={inputs.partnerName}
@@ -585,7 +585,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
               color: inputs.partnerGender ? 'white' : 'rgba(255, 255, 255, 0.4)',
             }}
           >
-            <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>Partner's gender</option>
+            <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>The other person's gender</option>
             <option value="Male" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Male</option>
             <option value="Female" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Female</option>
             <option value="Non-binary" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Non-binary</option>
