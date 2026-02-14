@@ -222,12 +222,12 @@ export default function App() {
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true,
         allowTaint: false,
-        backgroundColor: null,
-        scale: 1.5, // Reduced from 2 to 1.5 for faster rendering
-        logging: false, // Disable logging for better performance
+        backgroundColor: '#1a0b2e', // Fallback background color
+        scale: 1.5,
+        logging: false,
         imageTimeout: 15000,
         proxy: undefined,
-        removeContainer: true, // Clean up faster
+        removeContainer: true,
       });
       console.timeEnd('html2canvas rendering');
 
@@ -864,11 +864,23 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           minHeight: '850px',
           position: 'relative',
           overflow: 'hidden',
-          backgroundImage: 'url(/result%20background1.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat'
+          backgroundColor: '#1a0b2e'
         }}>
+          {/* Background Image Layer */}
+          <img 
+            src="/result%20background1.png" 
+            alt=""
+            crossOrigin="anonymous"
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              zIndex: 0
+            }}
+          />
           
           {/* Content layer */}
           <div style={{
@@ -923,16 +935,18 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
                 fontSize: '40px',
                 wordBreak: 'break-word',
                 overflowWrap: 'break-word',
-                textAlign: 'center'
+                textAlign: 'center',
+                fontFamily: '"Bernard MT Condensed", "Bebas Neue", sans-serif'
               }}>
                 {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
               </h3>
             </div>
 
-            <div className="text-white/80 text-center font-button leading-snug px-6 max-w-[320px] mt-6" style={{ 
+            <div className="text-white/80 font-button leading-snug px-6 max-w-[320px] mt-6" style={{ 
               letterSpacing: '-0.02em',
               fontSize: '14px',
-              lineHeight: '1.4'
+              lineHeight: '19px',
+              textAlign: 'left'
             }}>
               {renderDescription(result.description)}
             </div>
@@ -954,7 +968,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Visible Result Display - Original layout */}
-      <div className="flex flex-col items-center w-full">
+      <div className="flex flex-col items-center w-full" style={{ marginTop: '-12px' }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px' }}>
             {/* Polaroid background image */}
@@ -992,20 +1006,28 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           </div>
 
           <div className="text-center mt-4">
-            <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
+            <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ 
+              color: '#D3FFF8', 
+              letterSpacing: '0.04em',
+              fontFamily: '"Bernard MT Condensed", "Bebas Neue", sans-serif'
+            }}>
               {inputs.nickname} <span className="text-fuchsia-500 mx-1">×</span> {inputs.partnerName}
             </h3>
           </div>
 
-          <div className="text-white/80 text-center text-[16px] font-button leading-snug px-4 max-w-[280px] mt-6 mb-4" style={{ letterSpacing: '-0.02em' }}>
+          <div className="text-white/80 text-[16px] font-button leading-snug px-4 max-w-[280px] mt-6 mb-4" style={{ 
+            letterSpacing: '-0.02em',
+            lineHeight: '19px',
+            textAlign: 'left'
+          }}>
             {renderDescription(result.description)}
           </div>
         </div>
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 space-y-2 flex flex-col items-center pb-20">
-        <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
+      <div className="w-full px-6 flex flex-col items-center pb-20">
+        <p className="text-white/80 text-[14px] font-button text-center italic mb-3" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
         <button 
@@ -1021,7 +1043,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
-        <p className="text-white/40 text-[10px] font-button text-center">
+        <p className="text-white/40 text-[10px] font-button text-center mt-10">
           powered by Kuku, the app that actually gets you
         </p>
       </div>
