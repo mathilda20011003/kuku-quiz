@@ -210,7 +210,7 @@ export default function App() {
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true,
         allowTaint: false,
-        backgroundColor: '#1a0b2e', // Use the app background color
+        backgroundColor: null, // Use null to capture the background image
         scale: 2,
         logging: true, // Enable logging to debug
         imageTimeout: 15000,
@@ -817,23 +817,12 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           width: '400px',
           minHeight: '850px',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          backgroundImage: 'url(/result%20background1.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}>
-          {/* Background Image as img element */}
-          <img 
-            src="/result%20background1.png" 
-            alt="Background"
-            crossOrigin="anonymous"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: 0
-            }}
-          />
           
           {/* Content layer */}
           <div style={{
