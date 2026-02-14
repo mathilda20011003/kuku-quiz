@@ -465,7 +465,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="flex-1 flex flex-col justify-center animate-fadeIn">
+        <div className={`flex-1 flex flex-col animate-fadeIn ${step === 'RESULT' ? 'justify-start' : 'justify-center'}`}>
           {step === 'COVER' && <StepCover onStart={startQuiz} />}
           {step === 'INPUTS' && <StepInputs inputs={inputs} setInputs={setInputs} onContinue={handleInputsSubmit} />}
           {step === 'QUIZ' && <StepQuiz question={QUESTIONS[currentQuestionIndex]} index={currentQuestionIndex} onAnswer={handleAnswer} />}
@@ -881,23 +881,12 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           minHeight: '850px',
           position: 'relative',
           overflow: 'hidden',
-          backgroundColor: '#1a0b2e'
+          backgroundColor: '#1a0b2e',
+          backgroundImage: 'url(/result%20background1.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat'
         }}>
-          {/* Background Image Layer */}
-          <img 
-            src="/result%20background1.png" 
-            alt=""
-            crossOrigin="anonymous"
-            style={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              zIndex: 0
-            }}
-          />
           
           {/* Content layer */}
           <div style={{
