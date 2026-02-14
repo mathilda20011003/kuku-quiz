@@ -188,12 +188,12 @@ export default function App() {
     try {
       await Promise.all(imagePromises);
       console.log('All images loaded successfully');
-      // Wait an additional 1 second to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait a brief moment to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 200));
     } catch (err) {
       console.error('Some images failed to load:', err);
       // Continue anyway after waiting
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 200));
     }
   };
 
@@ -203,8 +203,8 @@ export default function App() {
     // Wait for all images to load
     await waitForImages(captureRef.current);
     
-    // Additional wait to ensure rendering is complete
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Additional brief wait to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 100));
     
     try {
       const canvas = await html2canvas(captureRef.current, {
