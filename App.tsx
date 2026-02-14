@@ -867,10 +867,10 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
                 {/* Result banner */}
                 <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '4px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
                   <span className="font-title text-white text-[16px] tracking-tight" style={{ 
-                    display: 'block',
                     wordBreak: 'break-word',
                     overflowWrap: 'break-word',
-                    lineHeight: '1.2'
+                    lineHeight: '1.3',
+                    textAlign: 'center'
                   }}>
                     {result.duoName}
                   </span>
@@ -943,10 +943,10 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               {/* Result banner */}
               <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '12px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
                 <span className="font-title text-white text-[16px] tracking-tight" style={{ 
-                  display: 'block',
                   wordBreak: 'break-word',
                   overflowWrap: 'break-word',
-                  lineHeight: '1.2'
+                  lineHeight: '1.3',
+                  textAlign: 'center'
                 }}>
                   {result.duoName}
                 </span>
