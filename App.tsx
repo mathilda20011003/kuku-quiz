@@ -47,62 +47,76 @@ export default function App() {
 
   const processResult = (userAnswers: string[]) => {
     setStep('LOADING');
+    
+    // Calculate result first
+    let targetPool: 'POOL_MF' | 'POOL_FF' | 'POOL_MM' = 'POOL_MF';
+    
+    const userGender = inputs.userGender || '';
+    const partnerGender = inputs.partnerGender || '';
+    
+    if (userGender === 'Male' && partnerGender === 'Male') {
+      targetPool = 'POOL_MM';
+    } else if (userGender === 'Female' && partnerGender === 'Female') {
+      targetPool = 'POOL_FF';
+    } else if (userGender === 'Non-binary' || partnerGender === 'Non-binary') {
+      targetPool = 'POOL_MF';
+    } else {
+      targetPool = 'POOL_MF';
+    }
+    
+    const poolLogic = LOGIC_MAPPING[targetPool];
+    const scores: Record<string, number> = {};
+    
+    userAnswers.forEach((answer, index) => {
+      const questionKey = `Q${index + 1}` as keyof typeof poolLogic;
+      const questionLogic = poolLogic[questionKey];
+      
+      if (questionLogic && questionLogic[answer as 'A' | 'B' | 'C' | 'D']) {
+        const resultIds = questionLogic[answer as 'A' | 'B' | 'C' | 'D'];
+        resultIds.forEach(id => {
+          scores[id] = (scores[id] || 0) + 1;
+        });
+      }
+    });
+    
+    let maxScore = 0;
+    let winningId = '';
+    
+    Object.entries(scores).forEach(([id, score]) => {
+      if (score > maxScore) {
+        maxScore = score;
+        winningId = id;
+      }
+    });
+    
+    if (!winningId) {
+      const poolPrefix = targetPool === 'POOL_MM' ? 'MM' : targetPool === 'POOL_FF' ? 'FF' : 'MF';
+      winningId = `${poolPrefix}_01`;
+    }
+    
+    const finalResult = ALL_RESULTS[winningId];
+    
+    // Preload result image during loading screen
+    const preloadImage = new Image();
+    preloadImage.crossOrigin = 'anonymous';
+    preloadImage.src = finalResult.image;
+    
+    // Also preload other static images
+    const preloadImages = [
+      '/quiz-result-Polaroid.png',
+      '/result%20background.png',
+      '/cheering.png',
+      '/qrcode.png'
+    ];
+    
+    preloadImages.forEach(src => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = src;
+    });
+    
     setTimeout(() => {
-      // Determine pool based on gender combination
-      let targetPool: 'POOL_MF' | 'POOL_FF' | 'POOL_MM' = 'POOL_MF';
-      
-      const userGender = inputs.userGender || '';
-      const partnerGender = inputs.partnerGender || '';
-      
-      if (userGender === 'Male' && partnerGender === 'Male') {
-        targetPool = 'POOL_MM';
-      } else if (userGender === 'Female' && partnerGender === 'Female') {
-        targetPool = 'POOL_FF';
-      } else if (userGender === 'Non-binary' || partnerGender === 'Non-binary') {
-        targetPool = 'POOL_MF';
-      } else {
-        targetPool = 'POOL_MF';
-      }
-      
-      // Get logic mapping for the target pool
-      const poolLogic = LOGIC_MAPPING[targetPool];
-      
-      // Initialize scores for all results in this pool
-      const scores: Record<string, number> = {};
-      
-      // Process each answer
-      userAnswers.forEach((answer, index) => {
-        const questionKey = `Q${index + 1}` as keyof typeof poolLogic;
-        const questionLogic = poolLogic[questionKey];
-        
-        if (questionLogic && questionLogic[answer as 'A' | 'B' | 'C' | 'D']) {
-          const resultIds = questionLogic[answer as 'A' | 'B' | 'C' | 'D'];
-          
-          resultIds.forEach(id => {
-            scores[id] = (scores[id] || 0) + 1;
-          });
-        }
-      });
-      
-      // Find the result with highest score
-      let maxScore = 0;
-      let winningId = '';
-      
-      Object.entries(scores).forEach(([id, score]) => {
-        if (score > maxScore) {
-          maxScore = score;
-          winningId = id;
-        }
-      });
-      
-      // Fallback to first result if no winner found
-      if (!winningId) {
-        const poolPrefix = targetPool === 'POOL_MM' ? 'MM' : targetPool === 'POOL_FF' ? 'FF' : 'MF';
-        winningId = `${poolPrefix}_01`;
-      }
-      
-      // Set the result
-      setResult(ALL_RESULTS[winningId]);
+      setResult(finalResult);
       setStep('RESULT');
     }, 5000);
   };
@@ -121,8 +135,32 @@ export default function App() {
   };
 
   // Capture and share functions for result page
+  const waitForImages = async (element: HTMLElement): Promise<void> => {
+    const images = element.querySelectorAll('img');
+    const imagePromises = Array.from(images).map(img => {
+      if (img.complete) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+        // Timeout after 10 seconds
+        setTimeout(reject, 10000);
+      });
+    });
+    
+    try {
+      await Promise.all(imagePromises);
+      // Wait an additional 500ms to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+    } catch (err) {
+      console.warn('Some images failed to load:', err);
+    }
+  };
+
   const captureImage = async (): Promise<Blob | null> => {
     if (!captureRef.current) return null;
+    
+    // Wait for all images to load
+    await waitForImages(captureRef.current);
     
     try {
       const canvas = await html2canvas(captureRef.current, {
@@ -264,21 +302,23 @@ export default function App() {
       </div>
       
       {/* Level 0: Background Image for Mobile */}
-      <div className="absolute inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
+      <div className="absolute inset-0 flex items-start justify-center" style={{ zIndex: 1, minHeight: '100%' }}>
         <div 
-          className="h-full w-full max-w-md bg-cover bg-center bg-no-repeat"
+          className="w-full max-w-md bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: step === 'COVER'
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png)' 
               : step === 'RESULT'
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png)'
-              : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)'
+              : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)',
+            minHeight: '100vh',
+            minHeight: '100dvh'
           }}
         ></div>
       </div>
 
       {/* Level 1: Main Content Container */}
-      <div className="w-full max-w-md h-full max-h-[850px] relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]">
+      <div className="w-full max-w-md h-full relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]">
         
         {step !== 'COVER' && step !== 'LOADING' && (
           <div className="flex items-center justify-between mb-2 z-10 px-2 pt-4 sticky top-0 pb-2">
@@ -900,7 +940,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 space-y-2 flex flex-col items-center pb-8">
+      <div className="w-full px-6 space-y-2 flex flex-col items-center pb-20">
         <p className="text-white/80 text-[14px] font-button text-center" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
