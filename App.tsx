@@ -119,7 +119,7 @@ export default function App() {
     const imagesToPreload = [
       finalResult.image,
       '/quiz-result-Polaroid.png',
-      '/result%20background1.png',
+      'https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png',
       '/cheering.png',
       '/qrcode.png'
     ];
@@ -882,7 +882,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           position: 'relative',
           overflow: 'hidden',
           backgroundColor: '#1a0b2e',
-          backgroundImage: 'url(/result%20background1.png)',
+          backgroundImage: 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat'
