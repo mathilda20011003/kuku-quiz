@@ -1,10 +1,17 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Step, UserInputs, QuizResult } from './types';
 import { QUESTIONS, ALL_RESULTS, LOGIC_MAPPING } from './constants';
 import html2canvas from 'html2canvas';
 
 const MASCOT_IMG = "https://kuku-quiz.s3.us-west-1.amazonaws.com/kuku.png";
+
+// Preload background images
+const BACKGROUND_IMAGES = {
+  homepage: 'https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png',
+  quiz: 'https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png',
+  result: 'https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png'
+};
 
 // Custom Pixel Badge Component matching the user's uploaded style
 const PixelBadge = ({ text, className = "" }: { text: string, className?: string }) => (
@@ -28,6 +35,16 @@ export default function App() {
   const [isSharing, setIsSharing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
 
+  // Preload all background images on mount
+  useEffect(() => {
+    console.log('Preloading background images...');
+    Object.entries(BACKGROUND_IMAGES).forEach(([key, url]) => {
+      const img = new Image();
+      img.onload = () => console.log(`Background ${key} preloaded`);
+      img.onerror = () => console.error(`Failed to preload background ${key}`);
+      img.src = url;
+    });
+  }, []);
   const startQuiz = () => setStep('INPUTS');
   
   const handleInputsSubmit = () => {
@@ -359,10 +376,10 @@ export default function App() {
           className="h-full w-full bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: step === 'COVER'
-              ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png)' 
+              ? `url(${BACKGROUND_IMAGES.homepage})` 
               : step === 'RESULT'
-              ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png)'
-              : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)',
+              ? `url(${BACKGROUND_IMAGES.result})`
+              : `url(${BACKGROUND_IMAGES.quiz})`,
             filter: 'blur(20px) brightness(0.7)',
             transform: 'scale(1.1)'
           }}
@@ -375,10 +392,10 @@ export default function App() {
           className="w-full max-w-md bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: step === 'COVER'
-              ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png)' 
+              ? `url(${BACKGROUND_IMAGES.homepage})` 
               : step === 'RESULT'
-              ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png)'
-              : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)',
+              ? `url(${BACKGROUND_IMAGES.result})`
+              : `url(${BACKGROUND_IMAGES.quiz})`,
             minHeight: '100dvh',
             height: '100%'
           }}
@@ -968,7 +985,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Visible Result Display - Original layout */}
-      <div className="flex flex-col items-center w-full" style={{ marginTop: '-12px' }}>
+      <div className="flex flex-col items-center w-full" style={{ marginTop: '-16px' }}>
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px' }}>
             {/* Polaroid background image */}
