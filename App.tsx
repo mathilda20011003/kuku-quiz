@@ -96,23 +96,34 @@ export default function App() {
     
     const finalResult = ALL_RESULTS[winningId];
     
-    // Preload result image during loading screen
-    const preloadImage = new Image();
-    preloadImage.crossOrigin = 'anonymous';
-    preloadImage.src = finalResult.image;
-    
-    // Also preload other static images
-    const preloadImages = [
+    // Preload ALL images during loading screen and wait for them
+    const imagesToPreload = [
+      finalResult.image,
       '/quiz-result-Polaroid.png',
       '/result%20background.png',
       '/cheering.png',
       '/qrcode.png'
     ];
     
-    preloadImages.forEach(src => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = src;
+    const preloadPromises = imagesToPreload.map(src => {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          console.log(`Preloaded: ${src}`);
+          resolve(src);
+        };
+        img.onerror = (err) => {
+          console.error(`Failed to preload: ${src}`, err);
+          resolve(src); // Resolve anyway to not block
+        };
+        img.src = src;
+      });
+    });
+    
+    // Wait for all images to preload, then show result after 5 seconds
+    Promise.all(preloadPromises).then(() => {
+      console.log('All images preloaded successfully');
     });
     
     setTimeout(() => {
@@ -137,22 +148,52 @@ export default function App() {
   // Capture and share functions for result page
   const waitForImages = async (element: HTMLElement): Promise<void> => {
     const images = element.querySelectorAll('img');
-    const imagePromises = Array.from(images).map(img => {
-      if (img.complete) return Promise.resolve();
+    console.log(`Found ${images.length} images to load`);
+    
+    const imagePromises = Array.from(images).map((img, index) => {
+      console.log(`Image ${index}: ${img.src}, complete: ${img.complete}`);
+      
+      if (img.complete && img.naturalHeight !== 0) {
+        console.log(`Image ${index} already loaded`);
+        return Promise.resolve();
+      }
+      
       return new Promise((resolve, reject) => {
-        img.onload = resolve;
-        img.onerror = reject;
-        // Timeout after 10 seconds
-        setTimeout(reject, 10000);
+        const timeout = setTimeout(() => {
+          console.warn(`Image ${index} timeout: ${img.src}`);
+          reject(new Error(`Timeout loading ${img.src}`));
+        }, 10000);
+        
+        img.onload = () => {
+          clearTimeout(timeout);
+          console.log(`Image ${index} loaded successfully`);
+          resolve();
+        };
+        
+        img.onerror = (err) => {
+          clearTimeout(timeout);
+          console.error(`Image ${index} failed to load: ${img.src}`, err);
+          reject(err);
+        };
+        
+        // Force reload if not complete
+        if (!img.complete) {
+          const src = img.src;
+          img.src = '';
+          img.src = src;
+        }
       });
     });
     
     try {
       await Promise.all(imagePromises);
-      // Wait an additional 500ms to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      console.log('All images loaded successfully');
+      // Wait an additional 1 second to ensure rendering is complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err) {
-      console.warn('Some images failed to load:', err);
+      console.error('Some images failed to load:', err);
+      // Continue anyway after waiting
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   };
 
@@ -162,13 +203,16 @@ export default function App() {
     // Wait for all images to load
     await waitForImages(captureRef.current);
     
+    // Additional wait to ensure rendering is complete
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
     try {
       const canvas = await html2canvas(captureRef.current, {
         useCORS: true,
         allowTaint: false,
-        backgroundColor: null, // Use transparent background to show the background image
+        backgroundColor: '#1a0b2e', // Use the app background color
         scale: 2,
-        logging: false,
+        logging: true, // Enable logging to debug
         imageTimeout: 15000,
         proxy: undefined,
       });
@@ -176,23 +220,8 @@ export default function App() {
       return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
     } catch (err) {
       console.error('Capture failed:', err);
-      
-      // Fallback: try without CORS
-      try {
-        console.log('Retrying without CORS...');
-        const canvas = await html2canvas(captureRef.current, {
-          useCORS: false,
-          allowTaint: false,
-          backgroundColor: null,
-          scale: 2,
-          logging: false,
-        });
-        return new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
-      } catch (fallbackErr) {
-        console.error('Fallback also failed:', fallbackErr);
-        alert('Screenshot failed. Please configure CORS on your S3 bucket. See AWS_S3_SETUP_GUIDE.md for instructions.');
-        return null;
-      }
+      alert('Screenshot failed. Please make sure all images are loaded. Error: ' + (err as Error).message);
+      return null;
     }
   };
 
@@ -208,7 +237,7 @@ export default function App() {
     const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
     
     if (isIOS || isSafari) {
-      // For iOS/Safari: Use native share API or open in new window
+      // For iOS/Safari: Try native share first, then download
       const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
       
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -219,19 +248,28 @@ export default function App() {
           });
           return;
         } catch (err) {
-          console.log('Share cancelled or failed');
+          console.log('Share cancelled or failed, trying download...');
         }
       }
       
-      // Fallback for Safari: Open image in new tab so user can long-press to save
-      const url = URL.createObjectURL(blob);
-      const newWindow = window.open(url, '_blank');
-      if (newWindow) {
-        setTimeout(() => URL.revokeObjectURL(url), 100);
-        alert('Image opened in new tab. Long-press the image to save it to your device.');
-      } else {
-        alert('Please allow pop-ups to save the image');
-        URL.revokeObjectURL(url);
+      // Fallback: Try direct download
+      try {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'kuku-tv-duo-quiz.png';
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        a.click();
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+      } catch (err) {
+        console.error('Download failed:', err);
+        alert('Unable to download. Please try the share button instead.');
       }
     } else {
       // For other browsers: Use download link
@@ -284,7 +322,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full relative flex flex-col items-center justify-center p-4 overflow-hidden" style={{ backgroundColor: '#1a0b2e', height: '100dvh' }}>
+    <div className="h-screen w-full relative flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: '#1a0b2e', height: '100dvh', minHeight: '100dvh' }}>
       {/* Level -1: Blurred Background for Desktop */}
       <div className="absolute inset-0" style={{ zIndex: 0 }}>
         <div 
@@ -302,23 +340,23 @@ export default function App() {
       </div>
       
       {/* Level 0: Background Image for Mobile */}
-      <div className="fixed inset-0 flex items-start justify-center" style={{ zIndex: 1 }}>
+      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
         <div 
-          className="w-full max-w-md bg-cover bg-center bg-no-repeat bg-fixed"
+          className="w-full max-w-md bg-cover bg-center bg-no-repeat"
           style={{ 
             backgroundImage: step === 'COVER'
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png)' 
               : step === 'RESULT'
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png)'
               : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)',
-            minHeight: '100vh',
+            minHeight: '100dvh',
             height: '100%'
           }}
         ></div>
       </div>
 
       {/* Level 1: Main Content Container */}
-      <div className="w-full max-w-md h-full relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]">
+      <div className="w-full max-w-md h-full relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]" style={{ minHeight: '100dvh' }}>
         
         {step !== 'COVER' && step !== 'LOADING' && (
           <div className="flex items-center justify-between mb-2 z-10 px-2 pt-4 sticky top-0 pb-2">
@@ -895,7 +933,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             <div className="absolute inset-0 flex flex-col" style={{ padding: '14% 10% 14% 10%' }}>
               <div className="relative w-full aspect-square" style={{ transform: 'rotate(4deg)' }}>
                 <div className="absolute inset-0 overflow-hidden">
-                  <img src={result.image} alt={result.duoName} className="w-full h-full object-cover" />
+                  <img src={result.image} alt={result.duoName} className="w-full h-full object-cover" crossOrigin="anonymous" />
                 </div>
                 <div className="absolute -top-10 -right-4 font-handwriting text-[#F539FF] text-[32px] rotate-[8deg] z-50">
                   Your TV Duo!
