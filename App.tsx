@@ -250,9 +250,8 @@ export default function App() {
         allowTaint: false,
         backgroundColor: null,
         scale: 2,
-        logging: true,
+        logging: false,
         width: 400,
-        height: 850,
       });
       console.timeEnd('html2canvas rendering');
       
@@ -891,7 +890,8 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
         <div ref={captureRef} style={{ 
           width: '400px',
-          height: '850px',
+          height: 'auto',
+          minHeight: '750px',
           position: 'relative',
           overflow: 'hidden'
         }}>
@@ -907,18 +907,16 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               width: '100%',
               height: '100%',
               objectFit: 'cover',
-              objectPosition: 'center'
+              objectPosition: 'center',
+              minHeight: '750px'
             }}
           />
           
           {/* Content layer - positioned above background */}
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
+            position: 'relative',
             width: '100%',
-            height: '100%',
-            padding: '40px 20px 60px 20px',
+            padding: '40px 20px 40px 20px',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center'
