@@ -302,9 +302,9 @@ export default function App() {
       </div>
       
       {/* Level 0: Background Image for Mobile */}
-      <div className="absolute inset-0 flex items-start justify-center" style={{ zIndex: 1, minHeight: '100%' }}>
+      <div className="fixed inset-0 flex items-start justify-center" style={{ zIndex: 1 }}>
         <div 
-          className="w-full max-w-md bg-cover bg-center bg-no-repeat"
+          className="w-full max-w-md bg-cover bg-center bg-no-repeat bg-fixed"
           style={{ 
             backgroundImage: step === 'COVER'
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/homepage.png)' 
@@ -312,7 +312,7 @@ export default function App() {
               ? 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/result%20background.png)'
               : 'url(https://kuku-quiz.s3.us-west-1.amazonaws.com/quzi%20backgroud.png)',
             minHeight: '100vh',
-            minHeight: '100dvh'
+            height: '100%'
           }}
         ></div>
       </div>
@@ -412,15 +412,8 @@ const StepCover = ({ onStart }: { onStart: () => void }) => (
 );
 
 const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, setInputs: any, onContinue: () => void }) => {
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    // Scroll the input into view when keyboard appears
-    setTimeout(() => {
-      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 300);
-  };
-
   return (
-  <div className="flex flex-col h-full justify-between py-4 px-6 overflow-y-auto">
+  <div className="flex flex-col h-full justify-between py-4 px-6">
     <div className="space-y-6">
       <div className="relative mt-4">
           <div className="bg-black px-3 py-3.5 rounded-lg relative">
@@ -443,7 +436,6 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
           className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
           value={inputs.nickname}
           onChange={(e) => setInputs({ ...inputs, nickname: e.target.value })}
-          onFocus={handleFocus}
         />
         
         {inputs.nickname && (
@@ -469,7 +461,6 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
           className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
           value={inputs.partnerName}
           onChange={(e) => setInputs({ ...inputs, partnerName: e.target.value })}
-          onFocus={handleFocus}
         />
 
         {inputs.partnerName && (
@@ -490,7 +481,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
       </div>
     </div>
 
-    <div className="w-full pb-8 flex-shrink-0">
+    <div className="w-full pb-8">
         <button 
         onClick={onContinue}
         disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
