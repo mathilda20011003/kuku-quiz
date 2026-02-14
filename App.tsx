@@ -246,7 +246,7 @@ export default function App() {
   };
 
   return (
-    <div className="h-screen w-full relative flex flex-col items-center justify-center p-4 overflow-hidden" style={{ backgroundColor: '#1a0b2e' }}>
+    <div className="h-screen w-full relative flex flex-col items-center justify-center p-4 overflow-hidden" style={{ backgroundColor: '#1a0b2e', height: '100dvh' }}>
       {/* Level -1: Blurred Background for Desktop */}
       <div className="absolute inset-0" style={{ zIndex: 0 }}>
         <div 
@@ -278,10 +278,10 @@ export default function App() {
       </div>
 
       {/* Level 1: Main Content Container */}
-      <div className="w-full max-w-md h-full max-h-[850px] relative flex flex-col overflow-hidden z-[2]" style={{ paddingTop: 'max(20px, env(safe-area-inset-top))', paddingBottom: 'max(20px, env(safe-area-inset-bottom))' }}>
+      <div className="w-full max-w-md h-full max-h-[850px] relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]">
         
         {step !== 'COVER' && step !== 'LOADING' && (
-          <div className="flex items-center justify-between mb-2 z-10 px-2 pt-2 shrink-0">
+          <div className="flex items-center justify-between mb-2 z-10 px-2 pt-4 sticky top-0 pb-2">
             <button onClick={goBack} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -324,7 +324,7 @@ export default function App() {
           </div>
         )}
 
-        <div className="flex-1 flex flex-col justify-center animate-fadeIn overflow-y-auto overflow-x-hidden">
+        <div className="flex-1 flex flex-col justify-center animate-fadeIn">
           {step === 'COVER' && <StepCover onStart={startQuiz} />}
           {step === 'INPUTS' && <StepInputs inputs={inputs} setInputs={setInputs} onContinue={handleInputsSubmit} />}
           {step === 'QUIZ' && <StepQuiz question={QUESTIONS[currentQuestionIndex]} index={currentQuestionIndex} onAnswer={handleAnswer} />}
@@ -372,8 +372,15 @@ const StepCover = ({ onStart }: { onStart: () => void }) => (
 );
 
 const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, setInputs: any, onContinue: () => void }) => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    // Scroll the input into view when keyboard appears
+    setTimeout(() => {
+      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
+  };
+
   return (
-  <div className="flex flex-col h-full justify-between py-4 px-6">
+  <div className="flex flex-col h-full justify-between py-4 px-6 overflow-y-auto">
     <div className="space-y-6">
       <div className="relative mt-4">
           <div className="bg-black px-3 py-3.5 rounded-lg relative">
@@ -396,6 +403,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
           className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
           value={inputs.nickname}
           onChange={(e) => setInputs({ ...inputs, nickname: e.target.value })}
+          onFocus={handleFocus}
         />
         
         {inputs.nickname && (
@@ -421,6 +429,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
           className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
           value={inputs.partnerName}
           onChange={(e) => setInputs({ ...inputs, partnerName: e.target.value })}
+          onFocus={handleFocus}
         />
 
         {inputs.partnerName && (
@@ -441,7 +450,7 @@ const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, set
       </div>
     </div>
 
-    <div className="w-full pb-8">
+    <div className="w-full pb-8 flex-shrink-0">
         <button 
         onClick={onContinue}
         disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
