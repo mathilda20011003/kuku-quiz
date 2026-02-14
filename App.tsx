@@ -24,6 +24,7 @@ export default function App() {
   const [answers, setAnswers] = useState<string[]>([]);
   const [result, setResult] = useState<QuizResult | null>(null);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
   const captureRef = useRef<HTMLDivElement>(null);
 
   const startQuiz = () => setStep('INPUTS');
@@ -148,52 +149,60 @@ export default function App() {
   // Capture and share functions for result page
   const waitForImages = async (element: HTMLElement): Promise<void> => {
     const images = element.querySelectorAll('img');
-    console.log(`Found ${images.length} images to load`);
+    console.log(`Found ${images.length} images to check`);
     
-    const imagePromises = Array.from(images).map((img, index) => {
-      console.log(`Image ${index}: ${img.src}, complete: ${img.complete}`);
-      
-      if (img.complete && img.naturalHeight !== 0) {
-        console.log(`Image ${index} already loaded`);
-        return Promise.resolve();
-      }
-      
-      return new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.warn(`Image ${index} timeout: ${img.src}`);
-          reject(new Error(`Timeout loading ${img.src}`));
-        }, 10000);
-        
-        img.onload = () => {
-          clearTimeout(timeout);
-          console.log(`Image ${index} loaded successfully`);
-          resolve();
-        };
-        
-        img.onerror = (err) => {
-          clearTimeout(timeout);
-          console.error(`Image ${index} failed to load: ${img.src}`, err);
-          reject(err);
-        };
-        
-        // Force reload if not complete
-        if (!img.complete) {
-          const src = img.src;
-          img.src = '';
-          img.src = src;
+    const imagePromises = Array.from(images)
+      .filter((img, index) => {
+        const isLoaded = img.complete && img.naturalHeight !== 0;
+        if (isLoaded) {
+          console.log(`Image ${index} already loaded: ${img.src}`);
         }
+        return !isLoaded; // Only wait for images that aren't loaded yet
+      })
+      .map((img, index) => {
+        console.log(`Waiting for image ${index}: ${img.src}`);
+        
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            console.warn(`Image ${index} timeout: ${img.src}`);
+            reject(new Error(`Timeout loading ${img.src}`));
+          }, 10000);
+          
+          img.onload = () => {
+            clearTimeout(timeout);
+            console.log(`Image ${index} loaded successfully`);
+            resolve();
+          };
+          
+          img.onerror = (err) => {
+            clearTimeout(timeout);
+            console.error(`Image ${index} failed to load: ${img.src}`, err);
+            reject(err);
+          };
+          
+          // Force reload if not complete
+          if (!img.complete) {
+            const src = img.src;
+            img.src = '';
+            img.src = src;
+          }
+        });
       });
-    });
+    
+    if (imagePromises.length === 0) {
+      console.log('All images already loaded, no need to wait');
+      return;
+    }
     
     try {
       await Promise.all(imagePromises);
-      console.log('All images loaded successfully');
+      console.log('All pending images loaded successfully');
       // Wait a brief moment to ensure rendering is complete
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (err) {
       console.error('Some images failed to load:', err);
       // Continue anyway after waiting
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
   };
 
@@ -226,99 +235,109 @@ export default function App() {
   };
 
   const saveImage = async () => {
-    const blob = await captureImage();
-    if (!blob) {
-      alert('Failed to capture image');
-      return;
-    }
-
-    // Check if we're on iOS Safari
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-    
-    if (isIOS || isSafari) {
-      // For iOS/Safari: Try native share first, then download
-      const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-      
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            title: 'Kuku TV Duo Quiz Result',
-            files: [file]
-          });
-          return;
-        } catch (err) {
-          console.log('Share cancelled or failed, trying download...');
-        }
+    setIsCapturing(true);
+    try {
+      const blob = await captureImage();
+      if (!blob) {
+        alert('Failed to capture image');
+        return;
       }
+
+      // Check if we're on iOS Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
       
-      // Fallback: Try direct download
-      try {
+      if (isIOS || isSafari) {
+        // For iOS/Safari: Try native share first, then download
+        const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
+        
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: 'Kuku TV Duo Quiz Result',
+              files: [file]
+            });
+            return;
+          } catch (err) {
+            console.log('Share cancelled or failed, trying download...');
+          }
+        }
+        
+        // Fallback: Try direct download
+        try {
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'kuku-tv-duo-quiz.png';
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          a.click();
+          
+          // Clean up
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }, 100);
+        } catch (err) {
+          console.error('Download failed:', err);
+          alert('Unable to download. Please try the share button instead.');
+        }
+      } else {
+        // For other browsers: Use download link
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = 'kuku-tv-duo-quiz.png';
-        a.style.display = 'none';
         document.body.appendChild(a);
         a.click();
-        
-        // Clean up
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-      } catch (err) {
-        console.error('Download failed:', err);
-        alert('Unable to download. Please try the share button instead.');
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
       }
-    } else {
-      // For other browsers: Use download link
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'kuku-tv-duo-quiz.png';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    } finally {
+      setIsCapturing(false);
     }
   };
 
   const handleShare = async () => {
-    const blob = await captureImage();
-    if (!blob) {
-      alert('Failed to capture image');
-      return;
-    }
-
-    const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-    
-    // Check if device supports native share with files
-    const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-    
-    if (canShareFiles) {
-      // Mobile: Try native share first
-      try {
-        await navigator.share({
-          title: 'Which TV Duo Are You?',
-          text: result ? `${inputs.nickname} × ${inputs.partnerName} are ${result.duoName}! 💕` : '',
-          files: [file]
-        });
-        return; // Success, exit
-      } catch (err) {
-        // User cancelled or share failed
-        if (err instanceof Error && err.name === 'AbortError') {
-          // User cancelled, do nothing
-          console.log('Share cancelled by user');
-          return;
-        }
-        // Other error, fall through to custom menu
-        console.log('Native share failed, showing custom menu');
+    setIsCapturing(true);
+    try {
+      const blob = await captureImage();
+      if (!blob) {
+        alert('Failed to capture image');
+        return;
       }
+
+      const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
+      
+      // Check if device supports native share with files
+      const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
+      
+      if (canShareFiles) {
+        // Mobile: Try native share first
+        try {
+          await navigator.share({
+            title: 'Which TV Duo Are You?',
+            text: result ? `${inputs.nickname} × ${inputs.partnerName} are ${result.duoName}! 💕` : '',
+            files: [file]
+          });
+          return; // Success, exit
+        } catch (err) {
+          // User cancelled or share failed
+          if (err instanceof Error && err.name === 'AbortError') {
+            // User cancelled, do nothing
+            console.log('Share cancelled by user');
+            return;
+          }
+          // Other error, fall through to custom menu
+          console.log('Native share failed, showing custom menu');
+        }
+      }
+      
+      // Desktop or native share not available: show custom share menu
+      setShowShareMenu(true);
+    } finally {
+      setIsCapturing(false);
     }
-    
-    // Desktop or native share not available: show custom share menu
-    setShowShareMenu(true);
   };
 
   return (
@@ -379,21 +398,37 @@ export default function App() {
                 <div className="flex items-center space-x-2">
                   <button 
                     onClick={saveImage}
-                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all"
+                    disabled={isCapturing}
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Save Image"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
+                    {isCapturing ? (
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    )}
                   </button>
                   <button 
                     onClick={handleShare}
-                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all"
+                    disabled={isCapturing}
+                    className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Share"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
+                    {isCapturing ? (
+                      <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                      </svg>
+                    )}
                   </button>
                 </div>
               </>
