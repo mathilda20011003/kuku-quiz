@@ -139,6 +139,21 @@
                 transform: scale(1);
             }
         }
+        
+        /* Hide scrollbar but keep scroll functionality */
+        ::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* For Firefox */
+        * {
+            scrollbar-width: none;
+        }
+        
+        /* For IE and Edge */
+        * {
+            -ms-overflow-style: none;
+        }
     </style>
 <script type="importmap">
 {
