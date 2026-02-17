@@ -1062,7 +1062,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 flex flex-col items-center pb-20">
+      <div className="w-full px-6 flex flex-col items-center pb-20 mt-5">
         <p className="text-white/80 text-[14px] font-button text-center italic mb-3" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
