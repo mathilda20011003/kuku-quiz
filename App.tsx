@@ -1051,7 +1051,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             </h3>
           </div>
 
-          <div className="text-white/80 text-[16px] font-button leading-snug px-6 max-w-[280px] mt-6 mb-4 relative" style={{
+          <div className="text-white/80 text-[15px] font-button leading-snug px-6 max-w-[280px] mt-6 mb-4 relative" style={{
             letterSpacing: '-0.02em',
             lineHeight: '19px',
             textAlign: 'center'
