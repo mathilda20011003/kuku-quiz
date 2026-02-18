@@ -980,13 +980,15 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               </h3>
             </div>
 
-            <div className="text-white/80 font-button leading-snug px-6 max-w-[320px] mt-6" style={{
+            <div className="text-white/80 font-button leading-snug px-6 max-w-[320px] mt-6 relative" style={{
               letterSpacing: '-0.02em',
               fontSize: '14px',
               lineHeight: '19px',
               textAlign: 'left'
             }}>
+              <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/left-quote.png" alt="" className="absolute -left-2 -top-3 w-4 h-4" crossOrigin="anonymous" />
               {renderDescription(result.description)}
+              <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/right-quote.png" alt="" className="absolute -right-2 -bottom-1 w-4 h-4" crossOrigin="anonymous" />
             </div>
 
             {/* QR Code - Small size */}
