@@ -1056,9 +1056,9 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             lineHeight: '19px',
             textAlign: 'center'
           }}>
-            <img src="/pubilc/left-quote.png" alt="" className="absolute -left-2 -top-3 w-4 h-4" crossOrigin="anonymous" />
+            <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/left-quote.png" alt="" className="absolute -left-2 -top-3 w-4 h-4" crossOrigin="anonymous" />
             {renderDescription(result.description)}
-            <img src="/pubilc/right-quote.png" alt="" className="absolute -right-2 -bottom-1 w-4 h-4" crossOrigin="anonymous" />
+            <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/right-quote.png" alt="" className="absolute -right-2 -bottom-1 w-4 h-4" crossOrigin="anonymous" />
           </div>
         </div>
       </div>
