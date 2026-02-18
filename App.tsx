@@ -121,7 +121,9 @@ export default function App() {
       '/quiz-result-Polaroid.png',
       'https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png',
       '/cheering.png',
-      '/qrcode.png'
+      '/qrcode.png',
+      'https://kuku-quiz.s3.us-west-1.amazonaws.com/left-quote.png',
+      'https://kuku-quiz.s3.us-west-1.amazonaws.com/right-quote.png'
     ];
 
     const preloadPromises = imagesToPreload.map(src => {
