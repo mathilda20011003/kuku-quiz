@@ -46,7 +46,7 @@ export default function App() {
     });
   }, []);
   const startQuiz = () => setStep('INPUTS');
-  
+
   const handleInputsSubmit = () => {
     if (inputs.nickname && inputs.partnerName && inputs.userGender && inputs.partnerGender) {
       setStep('QUIZ');
@@ -56,7 +56,7 @@ export default function App() {
   const handleAnswer = (optionIndex: number) => {
     const newAnswers = [...answers, ['A', 'B', 'C', 'D'][optionIndex]];
     setAnswers(newAnswers);
-    
+
     if (currentQuestionIndex < QUESTIONS.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
@@ -66,13 +66,13 @@ export default function App() {
 
   const processResult = (userAnswers: string[]) => {
     setStep('LOADING');
-    
+
     // Calculate result first
     let targetPool: 'POOL_MF' | 'POOL_FF' | 'POOL_MM' = 'POOL_MF';
-    
+
     const userGender = inputs.userGender || '';
     const partnerGender = inputs.partnerGender || '';
-    
+
     if (userGender === 'Male' && partnerGender === 'Male') {
       targetPool = 'POOL_MM';
     } else if (userGender === 'Female' && partnerGender === 'Female') {
@@ -82,14 +82,14 @@ export default function App() {
     } else {
       targetPool = 'POOL_MF';
     }
-    
+
     const poolLogic = LOGIC_MAPPING[targetPool];
     const scores: Record<string, number> = {};
-    
+
     userAnswers.forEach((answer, index) => {
       const questionKey = `Q${index + 1}` as keyof typeof poolLogic;
       const questionLogic = poolLogic[questionKey];
-      
+
       if (questionLogic && questionLogic[answer as 'A' | 'B' | 'C' | 'D']) {
         const resultIds = questionLogic[answer as 'A' | 'B' | 'C' | 'D'];
         resultIds.forEach(id => {
@@ -97,24 +97,24 @@ export default function App() {
         });
       }
     });
-    
+
     let maxScore = 0;
     let winningId = '';
-    
+
     Object.entries(scores).forEach(([id, score]) => {
       if (score > maxScore) {
         maxScore = score;
         winningId = id;
       }
     });
-    
+
     if (!winningId) {
       const poolPrefix = targetPool === 'POOL_MM' ? 'MM' : targetPool === 'POOL_FF' ? 'FF' : 'MF';
       winningId = `${poolPrefix}_01`;
     }
-    
+
     const finalResult = ALL_RESULTS[winningId];
-    
+
     // Preload ALL images during loading screen and wait for them
     const imagesToPreload = [
       finalResult.image,
@@ -123,7 +123,7 @@ export default function App() {
       '/cheering.png',
       '/qrcode.png'
     ];
-    
+
     const preloadPromises = imagesToPreload.map(src => {
       return new Promise((resolve, reject) => {
         const img = new Image();
@@ -139,12 +139,12 @@ export default function App() {
         img.src = src;
       });
     });
-    
+
     // Wait for all images to preload, then show result after 5 seconds
     Promise.all(preloadPromises).then(() => {
       console.log('All images preloaded successfully');
     });
-    
+
     setTimeout(() => {
       setResult(finalResult);
       setStep('RESULT');
@@ -154,12 +154,12 @@ export default function App() {
   const goBack = () => {
     if (step === 'INPUTS') setStep('COVER');
     else if (step === 'QUIZ') {
-        if (currentQuestionIndex > 0) {
-          setCurrentQuestionIndex(prev => prev - 1);
-          setAnswers(prev => prev.slice(0, -1));
-        } else {
-          setStep('INPUTS');
-        }
+      if (currentQuestionIndex > 0) {
+        setCurrentQuestionIndex(prev => prev - 1);
+        setAnswers(prev => prev.slice(0, -1));
+      } else {
+        setStep('INPUTS');
+      }
     }
     else if (step === 'RESULT') setStep('COVER');
   };
@@ -168,7 +168,7 @@ export default function App() {
   const waitForImages = async (element: HTMLElement): Promise<void> => {
     const images = element.querySelectorAll('img');
     console.log(`Found ${images.length} images to check`);
-    
+
     const imagePromises = Array.from(images)
       .filter((img, index) => {
         const isLoaded = img.complete && img.naturalHeight !== 0;
@@ -179,25 +179,25 @@ export default function App() {
       })
       .map((img, index) => {
         console.log(`Waiting for image ${index}: ${img.src}`);
-        
-        return new Promise((resolve, reject) => {
+
+        return new Promise<void>((resolve, reject) => {
           const timeout = setTimeout(() => {
             console.warn(`Image ${index} timeout: ${img.src}`);
             reject(new Error(`Timeout loading ${img.src}`));
           }, 10000);
-          
+
           img.onload = () => {
             clearTimeout(timeout);
             console.log(`Image ${index} loaded successfully`);
             resolve();
           };
-          
+
           img.onerror = (err) => {
             clearTimeout(timeout);
             console.error(`Image ${index} failed to load: ${img.src}`, err);
             reject(err);
           };
-          
+
           // Force reload if not complete
           if (!img.complete) {
             const src = img.src;
@@ -206,12 +206,12 @@ export default function App() {
           }
         });
       });
-    
+
     if (imagePromises.length === 0) {
       console.log('All images already loaded, no need to wait');
       return;
     }
-    
+
     try {
       await Promise.all(imagePromises);
       console.log('All pending images loaded successfully');
@@ -226,14 +226,14 @@ export default function App() {
 
   const captureImage = async (): Promise<Blob | null> => {
     if (!captureRef.current) return null;
-    
+
     console.time('Total capture time');
-    
+
     // Wait for all images to load
     console.time('Image loading');
     await waitForImages(captureRef.current);
     console.timeEnd('Image loading');
-    
+
     // Debug: Check computed styles
     const computedStyle = window.getComputedStyle(captureRef.current);
     console.log('Capture element background:', computedStyle.backgroundImage);
@@ -242,7 +242,7 @@ export default function App() {
       width: captureRef.current.offsetWidth,
       height: captureRef.current.offsetHeight
     });
-    
+
     try {
       console.time('html2canvas rendering');
       const canvas = await html2canvas(captureRef.current, {
@@ -253,7 +253,7 @@ export default function App() {
         logging: false,
       });
       console.timeEnd('html2canvas rendering');
-      
+
       console.log('Canvas dimensions:', {
         width: canvas.width,
         height: canvas.height
@@ -262,7 +262,7 @@ export default function App() {
       console.time('Blob conversion');
       const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/png'));
       console.timeEnd('Blob conversion');
-      
+
       console.timeEnd('Total capture time');
       return blob;
     } catch (err) {
@@ -285,11 +285,11 @@ export default function App() {
       // Check if we're on iOS Safari
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
       const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      
+
       if (isIOS || isSafari) {
         // For iOS/Safari: Try native share first, then download
         const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-        
+
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           try {
             await navigator.share({
@@ -301,7 +301,7 @@ export default function App() {
             console.log('Share cancelled or failed, trying download...');
           }
         }
-        
+
         // Fallback: Try direct download
         try {
           const url = URL.createObjectURL(blob);
@@ -311,7 +311,7 @@ export default function App() {
           a.style.display = 'none';
           document.body.appendChild(a);
           a.click();
-          
+
           // Clean up
           setTimeout(() => {
             document.body.removeChild(a);
@@ -347,17 +347,17 @@ export default function App() {
       }
 
       const file = new File([blob], 'kuku-tv-duo-quiz.png', { type: 'image/png' });
-      
+
       // Check if device supports native share with files
       const canShareFiles = navigator.canShare && navigator.canShare({ files: [file] });
-      
+
       if (canShareFiles) {
         // Mobile: Try native share first
         try {
-          const shareText = result 
+          const shareText = result
             ? `I just took the "Which TV Duo Are You?" quiz with ${inputs.partnerName} and we got ${result.duoName}! 💕✨\n\nTake the quiz and find out which iconic TV duo you and your person are: ${window.location.origin}${window.location.pathname}`
             : `Take the "Which TV Duo Are You?" quiz and find out which iconic TV duo you are! 💕✨\n\n${window.location.origin}${window.location.pathname}`;
-          
+
           await navigator.share({
             title: 'Which TV Duo Are You? 💕',
             text: shareText,
@@ -375,7 +375,7 @@ export default function App() {
           console.log('Native share failed, showing custom menu');
         }
       }
-      
+
       // Desktop or native share not available: show custom share menu
       setShowShareMenu(true);
     } finally {
@@ -387,30 +387,30 @@ export default function App() {
     <div className="h-screen w-full relative flex flex-col items-center justify-center overflow-hidden" style={{ backgroundColor: '#1a0b2e', height: '100dvh', minHeight: '100dvh' }}>
       {/* Level -1: Blurred Background for Desktop */}
       <div className="absolute inset-0" style={{ zIndex: 0 }}>
-        <div 
+        <div
           className="h-full w-full bg-cover bg-center bg-no-repeat"
-          style={{ 
+          style={{
             backgroundImage: step === 'COVER'
-              ? `url(${BACKGROUND_IMAGES.homepage})` 
+              ? `url(${BACKGROUND_IMAGES.homepage})`
               : step === 'RESULT'
-              ? `url(${BACKGROUND_IMAGES.result})`
-              : `url(${BACKGROUND_IMAGES.quiz})`,
+                ? `url(${BACKGROUND_IMAGES.result})`
+                : `url(${BACKGROUND_IMAGES.quiz})`,
             filter: 'blur(20px) brightness(0.7)',
             transform: 'scale(1.1)'
           }}
         ></div>
       </div>
-      
+
       {/* Level 0: Background Image for Mobile */}
       <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: 1 }}>
-        <div 
+        <div
           className="w-full max-w-md bg-cover bg-center bg-no-repeat"
-          style={{ 
+          style={{
             backgroundImage: step === 'COVER'
-              ? `url(${BACKGROUND_IMAGES.homepage})` 
+              ? `url(${BACKGROUND_IMAGES.homepage})`
               : step === 'RESULT'
-              ? `url(${BACKGROUND_IMAGES.result})`
-              : `url(${BACKGROUND_IMAGES.quiz})`,
+                ? `url(${BACKGROUND_IMAGES.result})`
+                : `url(${BACKGROUND_IMAGES.quiz})`,
             minHeight: '100dvh',
             height: '100%'
           }}
@@ -419,9 +419,9 @@ export default function App() {
 
       {/* Level 1: Main Content Container */}
       <div className="w-full max-w-md h-full relative flex flex-col overflow-y-auto overflow-x-hidden z-[2]" style={{ minHeight: '100dvh' }}>
-        
+
         {step !== 'COVER' && step !== 'LOADING' && (
-          <div className="flex items-center justify-between mb-2 z-10 px-2 pt-4 sticky top-0 pb-2">
+          <div className="flex items-center justify-between mb-2 z-10 px-2 pt-2 sticky top-0 pb-2">
             <button onClick={goBack} className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -429,7 +429,7 @@ export default function App() {
             </button>
             {(step === 'QUIZ' || step === 'INPUTS') && (
               <div className="flex-1 mx-4 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <div 
+                <div
                   className="h-full bg-fuchsia-500 transition-all duration-500"
                   style={{ width: step === 'INPUTS' ? `${(1 / (QUESTIONS.length + 1)) * 100}%` : `${((currentQuestionIndex + 2) / (QUESTIONS.length + 1)) * 100}%` }}
                 ></div>
@@ -439,7 +439,7 @@ export default function App() {
               <>
                 <div className="flex-1"></div>
                 <div className="flex items-center space-x-2">
-                  <button 
+                  <button
                     onClick={saveImage}
                     disabled={isDownloading}
                     className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -456,7 +456,7 @@ export default function App() {
                       </svg>
                     )}
                   </button>
-                  <button 
+                  <button
                     onClick={handleShare}
                     disabled={isSharing}
                     className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/20 hover:bg-fuchsia-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
@@ -480,7 +480,7 @@ export default function App() {
           </div>
         )}
 
-        <div className={`flex-1 flex flex-col animate-fadeIn ${step === 'RESULT' ? 'justify-start' : 'justify-center'}`}>
+        <div className={`flex-1 flex flex-col animate-fadeIn ${step === 'RESULT' ? 'justify-start mt-[-20px]' : 'justify-center'}`}>
           {step === 'COVER' && <StepCover onStart={startQuiz} />}
           {step === 'INPUTS' && <StepInputs inputs={inputs} setInputs={setInputs} onContinue={handleInputsSubmit} />}
           {step === 'QUIZ' && <StepQuiz question={QUESTIONS[currentQuestionIndex]} index={currentQuestionIndex} onAnswer={handleAnswer} />}
@@ -495,15 +495,15 @@ export default function App() {
 const StepCover = ({ onStart }: { onStart: () => void }) => (
   <div className="flex flex-col items-center text-center h-full justify-between py-4">
     <div className="w-16 h-16 flex items-center justify-center mt-8">
-        <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/logo.png" alt="Logo" className="w-full h-full object-contain" />
+      <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/logo.png" alt="Logo" className="w-full h-full object-contain" />
     </div>
     <div className="flex-1 flex flex-col items-center justify-center space-y-6 -mt-12">
       <div className="relative">
         <h1 className="text-[70px] font-title text-[#D3FFF8] uppercase tracking-normal leading-[80px] mb-2" style={{ lineHeight: '80px', letterSpacing: '0%' }}>
-          Which TV <br/> Show Duo <br/> Are You?
+          Which TV <br /> Show Duo <br /> Are You?
         </h1>
-        <span className="absolute -bottom-4 right-0 font-handwriting text-[#F539FF] opacity-90 text-[44.74px] rotate-[-8deg]" style={{ 
-          lineHeight: '44.7px', 
+        <span className="absolute -bottom-4 right-0 font-handwriting text-[#F539FF] opacity-90 text-[44.74px] rotate-[-8deg]" style={{
+          lineHeight: '44.7px',
           letterSpacing: '0px'
         }}>#Quiz</span>
       </div>
@@ -511,150 +511,150 @@ const StepCover = ({ onStart }: { onStart: () => void }) => (
         Find out what kind of relationship you have with your bestie/partner
       </p>
     </div>
-    
+
     <div className="w-full px-6 pb-8">
-        <button 
+      <button
         onClick={onStart}
         className="w-[327px] h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all mx-auto block"
         style={{
           padding: '0 16px',
           gap: '10px'
         }}
-        >
+      >
         Start Now
-        </button>
+      </button>
     </div>
   </div>
 );
 
 const StepInputs = ({ inputs, setInputs, onContinue }: { inputs: UserInputs, setInputs: any, onContinue: () => void }) => {
   return (
-  <div className="flex flex-col h-full justify-between py-4 px-6">
-    <div className="space-y-6">
-      <div className="relative mt-4">
+    <div className="flex flex-col h-full justify-between py-4 px-6">
+      <div className="space-y-6">
+        <div className="relative mt-4">
           <div className="bg-black px-3 py-3.5 rounded-lg relative">
-              <div className="absolute -top-[30px] -left-[15px] z-30 -rotate-6 w-[70px] h-[50px]">
-                <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/chat.png" alt="Q1" className="w-full h-full object-contain" />
-                <span className="absolute inset-0 flex items-center justify-center font-pixel text-white text-[16px] z-40" style={{ marginTop: '-4px' }}>Q1</span>
-              </div>
-              <h2 className="text-[28px] font-title leading-tight" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
-                  <span className="text-fuchsia-500">Whose</span> relationship are <br/> you testing
-              </h2>
-              <img src={MASCOT_IMG} className="absolute -bottom-8 right-2 w-16 z-30" alt="Mascot" style={{ filter: 'none', opacity: 1 }} />
+            <div className="absolute -top-[30px] -left-[15px] z-30 -rotate-6 w-[70px] h-[50px]">
+              <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/chat.png" alt="Q1" className="w-full h-full object-contain" />
+              <span className="absolute inset-0 flex items-center justify-center font-pixel text-white text-[16px] z-40" style={{ marginTop: '-4px' }}>Q1</span>
+            </div>
+            <h2 className="text-[28px] font-title leading-tight" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
+              <span className="text-fuchsia-500">Whose</span> relationship are <br /> you testing
+            </h2>
+            <img src={MASCOT_IMG} className="absolute -bottom-8 right-2 w-16 z-30" alt="Mascot" style={{ filter: 'none', opacity: 1 }} />
           </div>
+        </div>
+
+        <div className="space-y-6 mt-40">
+          <input
+            type="text"
+            placeholder="Your nickname"
+            maxLength={7}
+            className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
+            value={inputs.nickname}
+            onChange={(e) => setInputs({ ...inputs, nickname: e.target.value })}
+          />
+
+          {inputs.nickname && (
+            <select
+              className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors appearance-none cursor-pointer"
+              value={inputs.userGender || ''}
+              onChange={(e) => setInputs({ ...inputs, userGender: e.target.value })}
+              style={{
+                color: inputs.userGender ? 'white' : 'rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>Your gender</option>
+              <option value="Male" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Male</option>
+              <option value="Female" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Female</option>
+              <option value="Non-binary" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Non-binary</option>
+            </select>
+          )}
+
+          <input
+            type="text"
+            placeholder="The other person's name"
+            maxLength={7}
+            className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
+            value={inputs.partnerName}
+            onChange={(e) => setInputs({ ...inputs, partnerName: e.target.value })}
+          />
+
+          {inputs.partnerName && (
+            <select
+              className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors appearance-none cursor-pointer"
+              value={inputs.partnerGender || ''}
+              onChange={(e) => setInputs({ ...inputs, partnerGender: e.target.value })}
+              style={{
+                color: inputs.partnerGender ? 'white' : 'rgba(255, 255, 255, 0.4)',
+              }}
+            >
+              <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>The other person's gender</option>
+              <option value="Male" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Male</option>
+              <option value="Female" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Female</option>
+              <option value="Non-binary" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Non-binary</option>
+            </select>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-6 mt-40">
-        <input 
-          type="text" 
-          placeholder="Your nickname"
-          maxLength={7}
-          className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
-          value={inputs.nickname}
-          onChange={(e) => setInputs({ ...inputs, nickname: e.target.value })}
-        />
-        
-        {inputs.nickname && (
-          <select
-            className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors appearance-none cursor-pointer"
-            value={inputs.userGender || ''}
-            onChange={(e) => setInputs({ ...inputs, userGender: e.target.value })}
-            style={{ 
-              color: inputs.userGender ? 'white' : 'rgba(255, 255, 255, 0.4)',
-            }}
-          >
-            <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>Your gender</option>
-            <option value="Male" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Male</option>
-            <option value="Female" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Female</option>
-            <option value="Non-binary" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Non-binary</option>
-          </select>
-        )}
-
-        <input 
-          type="text" 
-          placeholder="The other person's name"
-          maxLength={7}
-          className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors placeholder:text-white/40"
-          value={inputs.partnerName}
-          onChange={(e) => setInputs({ ...inputs, partnerName: e.target.value })}
-        />
-
-        {inputs.partnerName && (
-          <select
-            className="w-full bg-transparent border-b-2 border-white/30 py-3 text-white text-[20px] font-title focus:outline-none focus:border-fuchsia-500 transition-colors appearance-none cursor-pointer"
-            value={inputs.partnerGender || ''}
-            onChange={(e) => setInputs({ ...inputs, partnerGender: e.target.value })}
-            style={{ 
-              color: inputs.partnerGender ? 'white' : 'rgba(255, 255, 255, 0.4)',
-            }}
-          >
-            <option value="" disabled hidden style={{ color: '#666', backgroundColor: '#fff', fontSize: '14px' }}>The other person's gender</option>
-            <option value="Male" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Male</option>
-            <option value="Female" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Female</option>
-            <option value="Non-binary" style={{ color: '#1a0b2e', backgroundColor: '#fff', fontSize: '14px' }}>Non-binary</option>
-          </select>
-        )}
-      </div>
-    </div>
-
-    <div className="w-full pb-8">
-        <button 
-        onClick={onContinue}
-        disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
-        className="w-full h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all disabled:opacity-50"
-        style={{
-          padding: '0 16px',
-          gap: '10px'
-        }}
+      <div className="w-full pb-8">
+        <button
+          onClick={onContinue}
+          disabled={!inputs.nickname || !inputs.partnerName || !inputs.userGender || !inputs.partnerGender}
+          className="w-full h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] transition-all disabled:opacity-50"
+          style={{
+            padding: '0 16px',
+            gap: '10px'
+          }}
         >
-        Continue
+          Continue
         </button>
+      </div>
     </div>
-  </div>
   );
 };
 
 const StepQuiz = ({ question, index, onAnswer }: { question: any, index: number, onAnswer: (optionIndex: number) => void }) => {
   return (
-  <div className="flex flex-col h-full justify-between py-4 px-6">
-    <div className="space-y-6">
-      <div className="relative mt-4">
+    <div className="flex flex-col h-full justify-between py-4 px-6">
+      <div className="space-y-6">
+        <div className="relative mt-4">
           <div className="bg-black px-3 py-3.5 rounded-lg relative">
-              <div className="absolute -top-[30px] -left-[15px] z-30 -rotate-6 w-[70px] h-[50px]">
-                <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/chat.png" alt={`Q${index + 2}`} className="w-full h-full object-contain" />
-                <span className="absolute inset-0 flex items-center justify-center font-pixel text-white text-[16px] z-40" style={{ marginTop: '-4px' }}>Q{index + 2}</span>
-              </div>
-              <h2 className="text-[28px] font-title leading-tight" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
-                  {question.text.split(question.highlightWord).map((part: string, i: number) => (
-                      <React.Fragment key={i}>
-                          {part}
-                          {i === 0 && <span className="text-fuchsia-500">{question.highlightWord}</span>}
-                      </React.Fragment>
-                  ))}
-              </h2>
-              <img src={MASCOT_IMG} className="absolute -bottom-8 right-2 w-16 z-30" alt="Mascot" style={{ filter: 'none', opacity: 1 }} />
+            <div className="absolute -top-[30px] -left-[15px] z-30 -rotate-6 w-[70px] h-[50px]">
+              <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/chat.png" alt={`Q${index + 2}`} className="w-full h-full object-contain" />
+              <span className="absolute inset-0 flex items-center justify-center font-pixel text-white text-[16px] z-40" style={{ marginTop: '-4px' }}>Q{index + 2}</span>
+            </div>
+            <h2 className="text-[28px] font-title leading-tight" style={{ color: '#D3FFF8', letterSpacing: '0.04em' }}>
+              {question.text.split(question.highlightWord).map((part: string, i: number) => (
+                <React.Fragment key={i}>
+                  {part}
+                  {i === 0 && <span className="text-fuchsia-500">{question.highlightWord}</span>}
+                </React.Fragment>
+              ))}
+            </h2>
+            <img src={MASCOT_IMG} className="absolute -bottom-8 right-2 w-16 z-30" alt="Mascot" style={{ filter: 'none', opacity: 1 }} />
           </div>
+        </div>
       </div>
-    </div>
 
-    <div className="space-y-2.5 pb-8">
-      {question.options.map((opt: any, i: number) => (
-        <button 
-          key={i}
-          onClick={() => onAnswer(i)}
-          className="w-full py-3.5 px-6 rounded-full font-button transition-all text-center text-[14px] quiz-option-button"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 1)',
-            color: 'white'
-          }}
-        >
-          {opt.label}
-        </button>
-      ))}
-      <style>{`
+      <div className="space-y-2.5 pb-8">
+        {question.options.map((opt: any, i: number) => (
+          <button
+            key={i}
+            onClick={() => onAnswer(i)}
+            className="w-full py-3.5 px-6 rounded-full font-button transition-all text-center text-[14px] quiz-option-button"
+            style={{
+              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: '1px solid rgba(255, 255, 255, 1)',
+              color: 'white'
+            }}
+          >
+            {opt.label}
+          </button>
+        ))}
+        <style>{`
         .quiz-option-button:active {
           background-color: rgba(245, 57, 255, 0.5) !important;
           border: 2px solid #D3FFF8 !important;
@@ -663,24 +663,24 @@ const StepQuiz = ({ question, index, onAnswer }: { question: any, index: number,
           -webkit-backdrop-filter: blur(20px) !important;
         }
       `}</style>
+      </div>
     </div>
-  </div>
   );
 };
 
 const StepLoading = () => (
-    <div className="flex flex-col items-center justify-center h-full relative">
-        <div className="relative w-80 h-80">
-            <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/loading.png" alt="Loading" className="w-full h-full object-contain" />
-        </div>
-        <h2 className="text-[28px] font-title text-[#D3FFF8] tracking-widest animate-pulse mt-8" style={{ letterSpacing: '0.04em' }}>
-            Loading results...
-        </h2>
+  <div className="flex flex-col items-center justify-center h-full relative">
+    <div className="relative w-80 h-80">
+      <img src="https://kuku-quiz.s3.us-west-1.amazonaws.com/loading.png" alt="Loading" className="w-full h-full object-contain" />
     </div>
+    <h2 className="text-[28px] font-title text-[#D3FFF8] tracking-widest animate-pulse mt-8" style={{ letterSpacing: '0.04em' }}>
+      Loading results...
+    </h2>
+  </div>
 );
 
-const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMenu }: { 
-  result: QuizResult, 
+const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMenu }: {
+  result: QuizResult,
   inputs: UserInputs,
   captureRef: React.RefObject<HTMLDivElement>,
   showShareMenu: boolean,
@@ -751,11 +751,11 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
     <div className="result-page-container flex flex-col items-center h-full justify-between py-2 relative overflow-y-auto overflow-x-hidden">
       {/* Share Menu Overlay */}
       {showShareMenu && (
-        <div 
-          className="absolute inset-0 z-50 flex items-center justify-center p-4" 
+        <div
+          className="absolute inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => setShowShareMenu(false)}
         >
-          <div 
+          <div
             className="relative max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}
             style={{
@@ -779,7 +779,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             <h3 className="text-[#D3FFF8] text-2xl font-title mb-6 text-center uppercase tracking-wide">
               Share Your Result
             </h3>
-            
+
             <div className="space-y-3">
               {isMobile ? (
                 <>
@@ -891,7 +891,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
 
       {/* Hidden Capture Area - Only for screenshot, not displayed */}
       <div style={{ position: 'fixed', left: '-9999px', top: 0, opacity: 0, pointerEvents: 'none' }}>
-        <div ref={captureRef} style={{ 
+        <div ref={captureRef} style={{
           width: '400px',
           maxWidth: '400px',
           height: 'auto',
@@ -901,7 +901,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           boxSizing: 'border-box'
         }}>
           {/* Background Image - MUST be first child */}
-          <img 
+          <img
             src="https://kuku-quiz.s3.us-west-1.amazonaws.com/result+background.png"
             alt=""
             crossOrigin="anonymous"
@@ -917,7 +917,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               display: 'block'
             }}
           />
-          
+
           {/* Content layer - positioned above background */}
           <div style={{
             position: 'relative',
@@ -929,13 +929,13 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           }}>
             <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px', marginTop: '29px' }}>
               {/* Polaroid background image */}
-              <img 
-                src="/quiz-result-Polaroid.png" 
-                alt="Polaroid frame" 
+              <img
+                src="/quiz-result-Polaroid.png"
+                alt="Polaroid frame"
                 className="w-full h-auto"
                 crossOrigin="anonymous"
               />
-              
+
               {/* Content overlay positioned on top of polaroid */}
               <div className="absolute inset-0 flex flex-col" style={{ padding: '14% 10% 14% 10%' }}>
                 <div className="relative w-full aspect-square" style={{ transform: 'rotate(4deg)' }}>
@@ -946,10 +946,10 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
                     Your TV Duo!
                   </div>
                 </div>
-                
+
                 {/* Result banner */}
                 <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '4px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
-                  <span className="font-title text-white text-[16px] tracking-tight" style={{ 
+                  <span className="font-title text-white text-[16px] tracking-tight" style={{
                     wordBreak: 'break-word',
                     overflowWrap: 'break-word',
                     lineHeight: '1.3',
@@ -964,9 +964,9 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             </div>
 
             <div className="text-center mt-8" style={{ width: '100%', padding: '0 20px' }}>
-              <h3 className="font-title tracking-tight uppercase" style={{ 
-                color: '#D3FFF8', 
-                letterSpacing: '0.04em', 
+              <h3 className="font-title tracking-tight uppercase" style={{
+                color: '#D3FFF8',
+                letterSpacing: '0.04em',
                 lineHeight: '1.2',
                 fontSize: '40px',
                 wordBreak: 'break-word',
@@ -978,7 +978,7 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
               </h3>
             </div>
 
-            <div className="text-white/80 font-button leading-snug px-6 max-w-[320px] mt-6" style={{ 
+            <div className="text-white/80 font-button leading-snug px-6 max-w-[320px] mt-6" style={{
               letterSpacing: '-0.02em',
               fontSize: '14px',
               lineHeight: '19px',
@@ -989,9 +989,9 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
 
             {/* QR Code - Small size */}
             <div className="flex flex-col items-center mt-8 mb-4">
-              <img 
-                src="/qrcode.png" 
-                alt="Kuku App QR Code" 
+              <img
+                src="/qrcode.png"
+                alt="Kuku App QR Code"
                 style={{ width: '80px', height: '80px', marginBottom: '8px' }}
                 crossOrigin="anonymous"
               />
@@ -1008,12 +1008,12 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
         <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <div className="relative transform-gpu w-[88%] max-w-[340px] origin-center" style={{ marginLeft: '19px' }}>
             {/* Polaroid background image */}
-            <img 
-              src="/quiz-result-Polaroid.png" 
-              alt="Polaroid frame" 
+            <img
+              src="/quiz-result-Polaroid.png"
+              alt="Polaroid frame"
               className="w-full h-auto"
             />
-            
+
             {/* Content overlay positioned on top of polaroid */}
             <div className="absolute inset-0 flex flex-col" style={{ padding: '14% 10% 14% 10%' }}>
               <div className="relative w-full aspect-square" style={{ transform: 'rotate(4deg)' }}>
@@ -1024,10 +1024,10 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
                   Your TV Duo!
                 </div>
               </div>
-              
+
               {/* Result banner */}
               <div className="pixel-result-banner" style={{ zIndex: 40, marginTop: '12px', transform: 'rotate(4deg)', maxWidth: '90%' }}>
-                <span className="font-title text-white text-[16px] tracking-tight" style={{ 
+                <span className="font-title text-white text-[16px] tracking-tight" style={{
                   wordBreak: 'break-word',
                   overflowWrap: 'break-word',
                   lineHeight: '1.3',
@@ -1042,8 +1042,8 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
           </div>
 
           <div className="text-center mt-4">
-            <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{ 
-              color: '#D3FFF8', 
+            <h3 className="text-[52px] font-title tracking-tight uppercase line-clamp-1" style={{
+              color: '#D3FFF8',
               letterSpacing: '0.04em',
               fontFamily: '"Bernard MT Condensed", "Bebas Neue", sans-serif'
             }}>
@@ -1051,22 +1051,24 @@ const StepResult = ({ result, inputs, captureRef, showShareMenu, setShowShareMen
             </h3>
           </div>
 
-          <div className="text-white/80 text-[16px] font-button leading-snug px-4 max-w-[280px] mt-6 mb-4" style={{ 
+          <div className="text-white/80 text-[16px] font-button leading-snug px-6 max-w-[280px] mt-6 mb-4 relative" style={{
             letterSpacing: '-0.02em',
             lineHeight: '19px',
-            textAlign: 'left'
+            textAlign: 'center'
           }}>
+            <img src="/pubilc/left-quote.png" alt="" className="absolute -left-2 -top-3 w-4 h-4" crossOrigin="anonymous" />
             {renderDescription(result.description)}
+            <img src="/pubilc/right-quote.png" alt="" className="absolute -right-2 -bottom-1 w-4 h-4" crossOrigin="anonymous" />
           </div>
         </div>
       </div>
 
       {/* Buttons Area - Original layout */}
-      <div className="w-full px-6 flex flex-col items-center pb-20">
+      <div className="w-full px-6 flex flex-col items-center pb-20 mt-5">
         <p className="text-white/80 text-[14px] font-button text-center italic mb-3" style={{ letterSpacing: '-0.02em', lineHeight: '100%' }}>
           The full story unlocks in Kuku!
         </p>
-        <button 
+        <button
           onClick={() => window.open('https://futura.go.link/7dDFx', '_blank')}
           className="w-[327px] h-[56px] bg-white rounded-[32px] text-[#F539FF] font-button text-[20px] shadow-[0_8px_0_#B13FB7] active:translate-y-1 active:shadow-[0_4px_0_#B13FB7] flex items-center justify-center space-x-2 transition-all mx-auto cursor-pointer"
           style={{
